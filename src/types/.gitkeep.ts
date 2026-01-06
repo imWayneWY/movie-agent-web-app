@@ -1,2 +1,0 @@
-// Type definitions placeholder
-export {};
