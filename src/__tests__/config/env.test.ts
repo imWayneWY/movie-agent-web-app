@@ -85,5 +85,69 @@ describe('Environment Configuration', () => {
       
       expect(env.tmdbApiKey).toBe('test-api-key');
     });
+
+    it('should throw for invalid LLM_PROVIDER', async () => {
+      process.env['LLM_PROVIDER'] = 'invalid-provider';
+      const { env } = await import('@/config/env');
+      
+      expect(() => env.llmProvider).toThrow("Invalid LLM_PROVIDER: invalid-provider. Must be 'gemini' or 'azure'.");
+    });
+
+    it('should accept azure as LLM_PROVIDER', async () => {
+      process.env['LLM_PROVIDER'] = 'azure';
+      const { env } = await import('@/config/env');
+      
+      expect(env.llmProvider).toBe('azure');
+    });
+
+    it('should throw for missing GEMINI_API_KEY', async () => {
+      delete process.env['GEMINI_API_KEY'];
+      const { env } = await import('@/config/env');
+      
+      expect(() => env.geminiApiKey).toThrow('Missing required environment variable: GEMINI_API_KEY');
+    });
+
+    it('should return GEMINI_API_KEY when set', async () => {
+      process.env['GEMINI_API_KEY'] = 'test-gemini-key';
+      const { env } = await import('@/config/env');
+      
+      expect(env.geminiApiKey).toBe('test-gemini-key');
+    });
+
+    it('should return undefined for Azure keys when not set', async () => {
+      delete process.env['AZURE_OPENAI_API_KEY'];
+      delete process.env['AZURE_OPENAI_ENDPOINT'];
+      delete process.env['AZURE_OPENAI_DEPLOYMENT'];
+      const { env } = await import('@/config/env');
+      
+      expect(env.azureOpenAiApiKey).toBeUndefined();
+      expect(env.azureOpenAiEndpoint).toBeUndefined();
+      expect(env.azureOpenAiDeployment).toBeUndefined();
+    });
+
+    it('should return Azure keys when set', async () => {
+      process.env['AZURE_OPENAI_API_KEY'] = 'azure-key';
+      process.env['AZURE_OPENAI_ENDPOINT'] = 'https://azure.endpoint';
+      process.env['AZURE_OPENAI_DEPLOYMENT'] = 'gpt-4';
+      const { env } = await import('@/config/env');
+      
+      expect(env.azureOpenAiApiKey).toBe('azure-key');
+      expect(env.azureOpenAiEndpoint).toBe('https://azure.endpoint');
+      expect(env.azureOpenAiDeployment).toBe('gpt-4');
+    });
+
+    it('should return undefined for App Insights connection string when not set', async () => {
+      delete process.env['NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING'];
+      const { env } = await import('@/config/env');
+      
+      expect(env.appInsightsConnectionString).toBeUndefined();
+    });
+
+    it('should return App Insights connection string when set', async () => {
+      process.env['NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING'] = 'InstrumentationKey=abc123';
+      const { env } = await import('@/config/env');
+      
+      expect(env.appInsightsConnectionString).toBe('InstrumentationKey=abc123');
+    });
   });
 });

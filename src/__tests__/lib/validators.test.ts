@@ -323,6 +323,11 @@ describe('Runtime Range Validators', () => {
       expect(isRuntimeRange({ min: -10 })).toBe(false);
     });
 
+    it('should return false for invalid max value', () => {
+      expect(isRuntimeRange({ max: 0 })).toBe(false);
+      expect(isRuntimeRange({ max: -5 })).toBe(false);
+    });
+
     it('should return false for non-integers', () => {
       expect(isRuntimeRange({ min: 60.5 })).toBe(false);
     });
@@ -448,6 +453,26 @@ describe('User Input Validators', () => {
 
     it('should return false for invalid genres', () => {
       expect(isUserInput({ genres: ['invalid'] })).toBe(false);
+    });
+
+    it('should return false for invalid platforms', () => {
+      expect(isUserInput({ platforms: ['invalid-platform'] })).toBe(false);
+    });
+
+    it('should return false for non-array platforms', () => {
+      expect(isUserInput({ platforms: 'netflix' })).toBe(false);
+    });
+
+    it('should return false for non-array genres', () => {
+      expect(isUserInput({ genres: 'Action' })).toBe(false);
+    });
+
+    it('should return false for invalid runtime', () => {
+      expect(isUserInput({ runtime: { min: -10, max: 500 } })).toBe(false);
+    });
+
+    it('should return false for invalid releaseYear', () => {
+      expect(isUserInput({ releaseYear: { from: 1800, to: 3000 } })).toBe(false);
     });
 
     it('should return false for non-objects', () => {
@@ -698,6 +723,58 @@ describe('Validation Helpers', () => {
       });
       expect(result.success).toBe(false);
       expect(result.errors?.length).toBeGreaterThan(1);
+    });
+
+    it('should return errors for invalid genre values in array', () => {
+      const result = validateUserInputWithErrors({ genres: ['Action', 'InvalidGenre'] });
+      expect(result.success).toBe(false);
+      expect(result.errors?.[0]?.field).toBe('genres');
+      expect(result.errors?.[0]?.message).toContain('Invalid genre values');
+    });
+
+    it('should return errors for invalid platform values in array', () => {
+      const result = validateUserInputWithErrors({ platforms: ['netflix', 'invalid-platform'] });
+      expect(result.success).toBe(false);
+      expect(result.errors?.[0]?.field).toBe('platforms');
+      expect(result.errors?.[0]?.message).toContain('Invalid platform IDs');
+    });
+
+    it('should return errors for non-object runtime', () => {
+      const result = validateUserInputWithErrors({ runtime: 'not-object' });
+      expect(result.success).toBe(false);
+      expect(result.errors?.[0]?.field).toBe('runtime');
+      expect(result.errors?.[0]?.message).toContain('Runtime must be an object');
+    });
+
+    it('should return errors for invalid runtime range values', () => {
+      const result = validateUserInputWithErrors({ runtime: { min: -1, max: 1000 } });
+      expect(result.success).toBe(false);
+      expect(result.errors?.[0]?.field).toBe('runtime');
+    });
+
+    it('should return errors for non-object releaseYear', () => {
+      const result = validateUserInputWithErrors({ releaseYear: 'not-object' });
+      expect(result.success).toBe(false);
+      expect(result.errors?.[0]?.field).toBe('releaseYear');
+      expect(result.errors?.[0]?.message).toContain('Release year must be an object');
+    });
+
+    it('should return errors for invalid releaseYear range values', () => {
+      const result = validateUserInputWithErrors({ releaseYear: { from: 1800, to: 3000 } });
+      expect(result.success).toBe(false);
+      expect(result.errors?.[0]?.field).toBe('releaseYear');
+    });
+
+    it('should validate valid runtime range', () => {
+      const result = validateUserInputWithErrors({ runtime: { min: 60, max: 120 } });
+      expect(result.success).toBe(true);
+      expect(result.data?.runtime).toEqual({ min: 60, max: 120 });
+    });
+
+    it('should validate valid releaseYear range', () => {
+      const result = validateUserInputWithErrors({ releaseYear: { from: 2000, to: 2023 } });
+      expect(result.success).toBe(true);
+      expect(result.data?.releaseYear).toEqual({ from: 2000, to: 2023 });
     });
   });
 });

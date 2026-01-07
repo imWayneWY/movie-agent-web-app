@@ -28,6 +28,7 @@ import {
   createSSEEvent,
   createSSEEncoder,
   withErrorHandling,
+  composeMiddleware,
 } from '@/lib/api-helpers';
 import { AppError } from '@/lib/errors';
 
@@ -555,6 +556,76 @@ describe('Request Handler Wrapper', () => {
         }),
         expect.anything()
       );
+    });
+  });
+
+  describe('composeMiddleware', () => {
+    it('should be a function', () => {
+      expect(typeof composeMiddleware).toBe('function');
+    });
+
+    it('should compose middleware functions', async () => {
+      const middleware1 = jest.fn((_req, next) => next());
+      const middleware2 = jest.fn((_req, next) => next());
+      const handler = jest.fn().mockResolvedValue({ status: 200, data: 'success' });
+      const mockRequest = {} as Request;
+
+      const composed = composeMiddleware(middleware1, middleware2);
+      await composed(mockRequest, handler);
+
+      expect(middleware1).toHaveBeenCalledWith(mockRequest, expect.any(Function));
+      expect(middleware2).toHaveBeenCalledWith(mockRequest, expect.any(Function));
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should execute middleware in order', async () => {
+      const order: number[] = [];
+      const middleware1 = jest.fn(async (_req, next) => {
+        order.push(1);
+        return next();
+      });
+      const middleware2 = jest.fn(async (_req, next) => {
+        order.push(2);
+        return next();
+      });
+      const handler = jest.fn().mockImplementation(async () => {
+        order.push(3);
+        return { status: 200 };
+      });
+      const mockRequest = {} as Request;
+
+      const composed = composeMiddleware(middleware1, middleware2);
+      await composed(mockRequest, handler);
+
+      expect(order).toEqual([1, 2, 3]);
+    });
+
+    it('should allow middleware to short-circuit', async () => {
+      const middleware1 = jest.fn(async () => {
+        return { status: 401, error: true } as unknown as NextResponse;
+      });
+      const middleware2 = jest.fn((_req, next) => next());
+      const handler = jest.fn().mockResolvedValue({ status: 200 });
+      const mockRequest = {} as Request;
+
+      const composed = composeMiddleware(middleware1, middleware2);
+      const result = await composed(mockRequest, handler);
+
+      expect(middleware1).toHaveBeenCalled();
+      expect(middleware2).not.toHaveBeenCalled();
+      expect(handler).not.toHaveBeenCalled();
+      expect(result).toEqual({ status: 401, error: true });
+    });
+
+    it('should call handler when no middleware', async () => {
+      const handler = jest.fn().mockResolvedValue({ status: 200, data: 'ok' });
+      const mockRequest = {} as Request;
+
+      const composed = composeMiddleware();
+      const result = await composed(mockRequest, handler);
+
+      expect(handler).toHaveBeenCalled();
+      expect(result).toEqual({ status: 200, data: 'ok' });
     });
   });
 });
