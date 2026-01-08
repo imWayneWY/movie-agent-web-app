@@ -79,6 +79,7 @@ export {
 // Error handling
 export {
   AppError,
+  RateLimitError,
   getStatusCodeForErrorType,
   isErrorTypeRetryable,
   getUserFriendlyMessage,
@@ -148,3 +149,10 @@ export * from './validators';
 
 // Constants (re-export existing)
 export * from './constants';
+
+// Rate limiting
+export {
+  RateLimiter,
+  createRateLimiter,
+} from './rate-limiter';
+export type { RateLimiterConfig, RateLimitInfo } from './rate-limiter';

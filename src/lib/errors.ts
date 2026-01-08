@@ -93,6 +93,81 @@ export class AppError extends Error {
   }
 }
 
+/**
+ * Rate limit error class with additional rate limit metadata
+ */
+export class RateLimitError extends AppError {
+  /** Number of requests made */
+  readonly requestCount: number;
+  /** Maximum allowed requests */
+  readonly maxRequests: number;
+  /** Time window in milliseconds */
+  readonly windowMs: number;
+  /** Time when the limit will reset */
+  readonly resetTime: number;
+
+  constructor(
+    requestCount: number,
+    maxRequests: number,
+    windowMs: number,
+    resetTime: number,
+    retryAfterSeconds: number
+  ) {
+    const message = `Rate limit exceeded. ${requestCount} requests made. Maximum ${maxRequests} requests allowed per ${windowMs}ms. Try again in ${retryAfterSeconds} seconds.`;
+    
+    super(message, 'RATE_LIMIT_EXCEEDED', {
+      retryAfter: retryAfterSeconds,
+      isRetryable: true,
+      context: {
+        requestCount,
+        maxRequests,
+        windowMs,
+        resetTime,
+      },
+    });
+
+    this.name = 'RateLimitError';
+    this.requestCount = requestCount;
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+    this.resetTime = resetTime;
+
+    // Maintain proper stack trace
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, RateLimitError);
+    }
+  }
+
+  /**
+   * Convert to ErrorResponse with rate limit headers
+   */
+  toErrorResponse(): ErrorResponse {
+    const response: ErrorResponse = {
+      error: true,
+      errorType: this.errorType,
+      message: this.message,
+    };
+
+    if (this.retryAfter !== undefined) {
+      response.retryAfter = this.retryAfter;
+    }
+
+    return response;
+  }
+
+  /**
+   * Get rate limit headers for HTTP responses
+   */
+  getRateLimitHeaders(): Record<string, string> {
+    return {
+      'X-RateLimit-Limit': String(this.maxRequests),
+      'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': String(Math.floor(this.resetTime / 1000)),
+      'Retry-After': String(this.retryAfter ?? 60),
+    };
+  }
+}
+
 // =============================================================================
 // ERROR TYPE HELPERS
 // =============================================================================
