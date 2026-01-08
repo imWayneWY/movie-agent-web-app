@@ -13,6 +13,7 @@ import type {
   YearRange,
   UserInput,
   RecommendRequest,
+  StreamRequest,
   ErrorResponse,
   Movie,
   MovieRecommendation,
@@ -456,6 +457,15 @@ export function validateRecommendRequest(value: unknown): RecommendRequest {
   }
 
   return result;
+}
+
+/**
+ * Validate and transform a StreamRequest
+ * Same validation as RecommendRequest (same structure)
+ */
+export function validateStreamRequest(value: unknown): StreamRequest {
+  // StreamRequest has the same structure as RecommendRequest
+  return validateRecommendRequest(value) as StreamRequest;
 }
 
 // =============================================================================

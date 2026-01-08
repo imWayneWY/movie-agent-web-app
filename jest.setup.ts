@@ -1,5 +1,39 @@
 import '@testing-library/jest-dom';
 
+// Polyfill Web Streams API for Node.js environment
+import { ReadableStream as NodeReadableStream } from 'stream/web';
+import { TextEncoder as NodeTextEncoder, TextDecoder as NodeTextDecoder } from 'util';
+
+// Add Web Streams API to global scope
+if (typeof globalThis.ReadableStream === 'undefined') {
+  (globalThis as any).ReadableStream = NodeReadableStream;
+}
+if (typeof globalThis.TextEncoder === 'undefined') {
+  (globalThis as any).TextEncoder = NodeTextEncoder;
+}
+if (typeof globalThis.TextDecoder === 'undefined') {
+  (globalThis as any).TextDecoder = NodeTextDecoder;
+}
+
+// Polyfill Fetch API for Node.js < 18 (should be available in Node 18+)
+// Using dynamic import to avoid compile errors if not available
+if (typeof globalThis.Response === 'undefined') {
+  // Node 18+ has these as globals, but Jest might not expose them
+  // Use undici which is Node's internal fetch implementation
+  try {
+    const { Response, Request, Headers, fetch } = require('undici');
+    (globalThis as any).Response = Response;
+    (globalThis as any).Request = Request;
+    (globalThis as any).Headers = Headers;
+    if (typeof globalThis.fetch === 'undefined') {
+      (globalThis as any).fetch = fetch;
+    }
+  } catch {
+    // undici not available, try native
+    console.warn('undici not available, fetch API might not work in tests');
+  }
+}
+
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({

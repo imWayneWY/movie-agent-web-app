@@ -13,6 +13,7 @@ import type {
   AgentResponse,
   AgentConfig,
   RetryOptions,
+  StreamEvent,
 } from '@/types';
 import { AppError } from '@/lib/errors';
 import { env } from '@/config/env';
@@ -104,6 +105,35 @@ export class MovieAgentService {
     return this.executeWithRetry(async () => {
       return this.callAgent(request);
     });
+  }
+
+  /**
+   * Get movie recommendations as a stream
+   * Yields streaming events for real-time response
+   */
+  async *getRecommendationsStream(request: AgentRequest): AsyncGenerator<StreamEvent> {
+    // Validate request
+    this.validateRequest(request);
+
+    // TODO: Replace with actual movie-agent streaming call
+    // In production, this will call the movie-agent package's streaming method:
+    // const agent = new MovieAgent({ provider: this.config.provider });
+    // for await (const event of agent.streamRecommend(request)) {
+    //   yield event;
+    // }
+
+    // Mock implementation for testing
+    if (process.env.NODE_ENV === 'test') {
+      // This will be mocked in tests
+      throw new Error('Stream agent not implemented - should be mocked in tests');
+    }
+
+    // Production placeholder
+    throw new AppError(
+      'Movie agent streaming integration not yet implemented',
+      'AGENT_ERROR',
+      { statusCode: 501 }
+    );
   }
 
   /**

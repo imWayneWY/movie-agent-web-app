@@ -267,6 +267,17 @@ export interface RetryOptions {
 // =============================================================================
 
 /**
+ * Request body for /api/stream endpoint
+ */
+export interface StreamRequest {
+  mood?: string;
+  genres?: string | string[];
+  platforms?: string[];
+  runtime?: RuntimeRange;
+  releaseYear?: number | YearRange;
+}
+
+/**
  * Streaming event types for SSE
  */
 export type StreamEventType = 'text' | 'movie' | 'done' | 'error';
@@ -277,6 +288,15 @@ export type StreamEventType = 'text' | 'movie' | 'done' | 'error';
 export interface StreamEvent {
   type: StreamEventType;
   data: string | MovieRecommendation | null;
+}
+
+/**
+ * Error event data for streaming
+ */
+export interface StreamErrorData {
+  error: true;
+  errorType: ErrorType;
+  message: string;
 }
 
 // =============================================================================
