@@ -210,12 +210,57 @@ export type ErrorType =
   | 'NOT_FOUND'
   | 'API_ERROR'
   | 'NETWORK_ERROR'
+  | 'AGENT_ERROR'
+  | 'TIMEOUT_ERROR'
   | 'UNKNOWN_ERROR';
 
 /**
  * API response union type
  */
 export type ApiResponse<T> = T | ErrorResponse;
+
+// =============================================================================
+// MOVIE AGENT TYPES
+// =============================================================================
+
+/**
+ * Movie agent request options
+ */
+export interface AgentRequest {
+  mood?: MoodValue;
+  genres?: GenreValue[];
+  platforms?: PlatformId[];
+  runtime?: RuntimeRange;
+  releaseYear?: YearRange;
+}
+
+/**
+ * Movie agent response
+ */
+export interface AgentResponse {
+  recommendations: MovieRecommendation[];
+  reasoning?: string;
+}
+
+/**
+ * Movie agent configuration
+ */
+export interface AgentConfig {
+  provider: 'gemini' | 'azure';
+  timeout?: number;
+  maxRetries?: number;
+  retryDelay?: number;
+}
+
+/**
+ * Retry options for agent calls
+ */
+export interface RetryOptions {
+  maxRetries: number;
+  initialDelay: number;
+  maxDelay: number;
+  backoffMultiplier: number;
+}
 
 // =============================================================================
 // STREAMING TYPES
