@@ -68,11 +68,38 @@ jest.mock('next/server', () => {
     }
   }
 
+  class MockNextRequest {
+    url: string;
+    method: string;
+    headers: MockHeaders;
+    private bodyContent: string | null;
+
+    constructor(url: string, init?: { method?: string; headers?: Record<string, string> | [string, string][]; body?: string | null }) {
+      this.url = url;
+      this.method = init?.method || 'GET';
+      this.headers = new MockHeaders(init?.headers);
+      this.bodyContent = init?.body || null;
+    }
+
+    async json(): Promise<unknown> {
+      if (!this.bodyContent) {
+        throw new Error('Body is empty');
+      }
+      try {
+        return JSON.parse(this.bodyContent);
+      } catch (error) {
+        throw new Error('Invalid JSON');
+      }
+    }
+
+    async text(): Promise<string> {
+      return this.bodyContent || '';
+    }
+  }
+
   return {
     NextResponse: MockNextResponse,
-    NextRequest: class {
-      constructor(public url: string, public init?: any) {}
-    },
+    NextRequest: MockNextRequest,
   };
 });
 
