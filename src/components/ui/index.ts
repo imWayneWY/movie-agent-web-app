@@ -16,3 +16,9 @@ export { Slider } from './slider';
 
 // Custom components
 export { ThemeToggle } from './theme-toggle';
+export {
+  MovieCard,
+  MovieCardSkeleton,
+  type MovieCardProps,
+  type MovieCardSkeletonProps,
+} from './movie-card';
