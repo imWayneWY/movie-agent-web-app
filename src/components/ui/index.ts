@@ -31,3 +31,9 @@ export {
   type PlatformBadgeVariant,
   type PlatformBadgeSize,
 } from './platform-badge';
+export {
+  MoodSelector,
+  MoodSelectorSkeleton,
+  type MoodSelectorProps,
+  type MoodSelectorSkeletonProps,
+} from './mood-selector';
