@@ -12,7 +12,7 @@ import type { MoodValue } from '@/types';
 
 export interface MoodSelectorProps {
   /** Currently selected mood value */
-  selectedMood?: MoodValue;
+  selectedMood?: MoodValue | undefined;
   /** Callback when a mood is selected */
   onSelect: (mood: MoodValue) => void;
   /** Whether the selector is disabled */

@@ -43,3 +43,9 @@ export {
   type AdvancedFiltersProps,
   type AdvancedFiltersSkeletonProps,
 } from './advanced-filters';
+export {
+  BotContainer,
+  BotContainerSkeleton,
+  type BotContainerProps,
+  type BotContainerSkeletonProps,
+} from './bot-container';
