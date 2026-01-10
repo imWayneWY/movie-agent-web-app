@@ -22,3 +22,12 @@ export {
   type MovieCardProps,
   type MovieCardSkeletonProps,
 } from './movie-card';
+export {
+  PlatformBadge,
+  PlatformBadgeGroup,
+  generatePlatformUrl,
+  type PlatformBadgeProps,
+  type PlatformBadgeGroupProps,
+  type PlatformBadgeVariant,
+  type PlatformBadgeSize,
+} from './platform-badge';
