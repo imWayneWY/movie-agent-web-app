@@ -37,3 +37,9 @@ export {
   type MoodSelectorProps,
   type MoodSelectorSkeletonProps,
 } from './mood-selector';
+export {
+  AdvancedFilters,
+  AdvancedFiltersSkeleton,
+  type AdvancedFiltersProps,
+  type AdvancedFiltersSkeletonProps,
+} from './advanced-filters';
