@@ -14,3 +14,15 @@ export {
   type UseRecommendationsOptions,
   type RecommendationsError,
 } from './use-recommendations';
+
+// Streaming hook
+export {
+  useStreaming,
+  convertToStreamRequest,
+  parseSSEEvent,
+  createSSEConnection,
+  type UseStreamingState,
+  type UseStreamingReturn,
+  type UseStreamingOptions,
+  type StreamingError,
+} from './use-streaming';
