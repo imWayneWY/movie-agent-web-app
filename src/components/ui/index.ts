@@ -49,3 +49,13 @@ export {
   type BotContainerProps,
   type BotContainerSkeletonProps,
 } from './bot-container';
+export {
+  MovieList,
+  MovieListSkeleton,
+  MovieListEmpty,
+  MovieListError,
+  type MovieListProps,
+  type MovieListSkeletonProps,
+  type MovieListEmptyProps,
+  type MovieListErrorProps,
+} from './movie-list';
