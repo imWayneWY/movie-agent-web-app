@@ -13,6 +13,16 @@ export { Checkbox } from './checkbox';
 export { Separator } from './separator';
 export { Skeleton } from './skeleton';
 export { Slider } from './slider';
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  type TabsProps,
+  type TabsListProps,
+  type TabsTriggerProps,
+  type TabsContentProps,
+} from './tabs';
 
 // Custom components
 export { ThemeToggle } from './theme-toggle';
