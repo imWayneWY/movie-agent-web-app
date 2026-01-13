@@ -168,17 +168,17 @@ export class ErrorBoundary extends Component<
 
 export interface ErrorFallbackProps extends FallbackProps {
   /** Whether to show the reset button */
-  showReset?: boolean;
+  showReset?: boolean | undefined;
   /** Additional class name */
-  className?: string;
+  className?: string | undefined;
   /** Custom title */
-  title?: string;
+  title?: string | undefined;
   /** Custom description */
-  description?: string;
+  description?: string | undefined;
   /** Whether to show error details in development */
-  showDetails?: boolean;
+  showDetails?: boolean | undefined;
   /** Variant of the fallback */
-  variant?: 'card' | 'inline' | 'full-page';
+  variant?: 'card' | 'inline' | 'full-page' | undefined;
 }
 
 /**

@@ -156,3 +156,35 @@ export {
   createRateLimiter,
 } from './rate-limiter';
 export type { RateLimiterConfig, RateLimitInfo } from './rate-limiter';
+
+// Performance monitoring
+export {
+  // Constants
+  WEB_VITALS_THRESHOLDS,
+  // Utility functions
+  getWebVitalRating,
+  formatWebVitalValue,
+  // Class
+  PerformanceMonitor,
+  // Web Vitals
+  reportWebVitals,
+  initWebVitals,
+  // Singleton
+  getPerformanceMonitor,
+  resetPerformanceMonitor,
+  // Trackers
+  createRenderTracker,
+  createApiTracker,
+  // Bundle size utilities
+  getTransferredSize,
+  getTotalJsBundleSize,
+  getTotalCssBundleSize,
+} from './performance';
+export type {
+  WebVitalName,
+  WebVitalRating,
+  WebVitalMetric,
+  PerformanceMetric,
+  PerformanceReporter,
+  PerformanceMonitorConfig,
+} from './performance';

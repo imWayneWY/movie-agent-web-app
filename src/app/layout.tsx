@@ -4,8 +4,13 @@ import './globals.css';
 import { ThemeProvider, AnalyticsProvider } from '@/components/providers';
 import { Header, Footer } from '@/components/layout';
 import { Toaster } from '@/components/error-handling';
+import { WebVitals } from '@/components/performance';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap', // Optimize font loading
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: 'Movie Agent - AI-Powered Movie Recommendations',
@@ -36,6 +41,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AnalyticsProvider>
+            <WebVitals />
             <div className="relative flex min-h-screen flex-col">
               <Header />
               <main className="flex-1">{children}</main>

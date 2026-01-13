@@ -14,6 +14,10 @@ const config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Transform lucide-react ESM to CJS for Jest
+  transformIgnorePatterns: [
+    'node_modules/(?!(lucide-react)/)',
+  ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',

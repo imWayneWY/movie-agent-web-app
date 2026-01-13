@@ -34,82 +34,84 @@ import type { ErrorType } from '@/types';
 
 export interface ErrorDisplayProps {
   /** Error type for icon and styling */
-  errorType?: ErrorType;
+  errorType?: ErrorType | undefined;
   /** Error title */
-  title?: string;
+  title?: string | undefined;
   /** Error message */
   message: string;
   /** Whether to show retry button */
-  showRetry?: boolean;
+  showRetry?: boolean | undefined;
   /** Retry handler */
-  onRetry?: () => void;
+  onRetry?: (() => void) | undefined;
   /** Whether retrying is in progress */
-  isRetrying?: boolean;
+  isRetrying?: boolean | undefined;
   /** Retry after seconds (for rate limit) */
-  retryAfter?: number;
+  retryAfter?: number | undefined;
   /** Additional class name */
-  className?: string;
+  className?: string | undefined;
   /** Variant style */
-  variant?: 'default' | 'inline' | 'card' | 'minimal';
+  variant?: 'default' | 'inline' | 'card' | 'minimal' | undefined;
   /** Size */
-  size?: 'sm' | 'default' | 'lg';
+  size?: 'sm' | 'default' | 'lg' | undefined;
 }
 
 export interface ErrorAlertProps {
   /** Error message */
   message: string;
   /** Error type */
-  type?: 'error' | 'warning' | 'info';
+  type?: 'error' | 'warning' | 'info' | undefined;
   /** Whether dismissible */
-  dismissible?: boolean;
+  dismissible?: boolean | undefined;
   /** Dismiss handler */
-  onDismiss?: () => void;
+  onDismiss?: (() => void) | undefined;
   /** Additional class name */
-  className?: string;
+  className?: string | undefined;
 }
 
 export interface NetworkErrorProps {
   /** Custom message */
-  message?: string;
+  message?: string | undefined;
   /** Retry handler */
-  onRetry?: () => void;
+  onRetry?: (() => void) | undefined;
   /** Whether retrying */
-  isRetrying?: boolean;
+  isRetrying?: boolean | undefined;
   /** Additional class name */
-  className?: string;
+  className?: string | undefined;
 }
 
 export interface RateLimitErrorProps {
   /** Retry after seconds */
   retryAfter: number;
   /** Retry handler */
-  onRetry?: () => void;
+  onRetry?: (() => void) | undefined;
   /** Additional class name */
-  className?: string;
+  className?: string | undefined;
 }
 
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
+type IconComponent = React.ComponentType<{ className?: string | undefined }>;
+
 function getErrorIcon(
   errorType: ErrorType | undefined
-): React.ComponentType<{ className?: string }> {
+): IconComponent {
   switch (errorType) {
     case 'NETWORK_ERROR':
-      return WifiOff;
+      return WifiOff as IconComponent;
     case 'RATE_LIMIT_EXCEEDED':
     case 'TIMEOUT_ERROR':
-      return Clock;
+      return Clock as IconComponent;
     case 'VALIDATION_ERROR':
-      return AlertCircle;
+      return AlertCircle as IconComponent;
     case 'NOT_FOUND':
-      return HelpCircle;
+      return HelpCircle as IconComponent;
     case 'API_ERROR':
     case 'AGENT_ERROR':
     case 'UNKNOWN_ERROR':
     default:
-      return AlertTriangle;
+      return AlertTriangle as IconComponent;
   }
 }
 
@@ -525,15 +527,15 @@ export function RateLimitError({
 export function EmptyState({
   title = 'No Results',
   message = 'No results found. Try adjusting your filters.',
-  icon: IconComponent = HelpCircle,
+  icon: IconComponent = HelpCircle as IconComponent,
   action,
   className,
 }: {
-  title?: string;
-  message?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  title?: string | undefined;
+  message?: string | undefined;
+  icon?: IconComponent | undefined;
   action?: React.ReactNode;
-  className?: string;
+  className?: string | undefined;
 }): React.ReactElement {
   return (
     <div
