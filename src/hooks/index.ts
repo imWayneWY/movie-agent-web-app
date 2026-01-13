@@ -26,3 +26,10 @@ export {
   type UseStreamingOptions,
   type StreamingError,
 } from './use-streaming';
+
+// Analytics hook
+export {
+  useAnalytics,
+  createAnalyticsHelpers,
+  type UseAnalyticsReturn,
+} from './use-analytics';

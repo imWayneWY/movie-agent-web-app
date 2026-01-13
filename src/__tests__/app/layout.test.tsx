@@ -16,10 +16,13 @@ jest.mock('next/font/google', () => ({
   }),
 }));
 
-// Mock the ThemeProvider
+// Mock the ThemeProvider and AnalyticsProvider
 jest.mock('@/components/providers', () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="theme-provider">{children}</div>
+  ),
+  AnalyticsProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="analytics-provider">{children}</div>
   ),
 }));
 

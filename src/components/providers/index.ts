@@ -21,3 +21,10 @@ export {
   type AppActions,
   type AppAction,
 } from './app-context';
+
+// Analytics Provider
+export {
+  AnalyticsProvider,
+  AnalyticsContext,
+  type AnalyticsProviderProps,
+} from './analytics-provider';

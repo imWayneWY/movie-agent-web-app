@@ -8,7 +8,7 @@
  */
 
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BotContainer,
@@ -22,7 +22,8 @@ import {
 } from '@/components/providers';
 import { useRecommendations } from '@/hooks/use-recommendations';
 import { useStreaming } from '@/hooks/use-streaming';
-import type { UserInput } from '@/types';
+import { useAnalytics } from '@/hooks/use-analytics';
+import type { UserInput, MoodValue } from '@/types';
 import { cn } from '@/lib/utils';
 
 // =============================================================================
@@ -70,6 +71,22 @@ export function HomeContent({ testId }: HomeContentProps) {
     streamingError,
   } = state;
 
+  // Analytics hook for tracking user interactions
+  const {
+    trackRecommendationsRequested,
+    trackRecommendationsReceived,
+    trackRecommendationsError,
+    trackStreamingStarted,
+    trackStreamingCompleted,
+    trackStreamingError,
+    trackStreamingStopped,
+    trackModeSwitched,
+    trackFiltersReset,
+  } = useAnalytics();
+
+  // Ref for tracking request timing
+  const requestStartTime = useRef<number>(0);
+
   // Hooks for API communication
   const {
     fetchRecommendations,
@@ -91,13 +108,29 @@ export function HomeContent({ testId }: HomeContentProps) {
       streamingActions.setStreamingComplete(true);
       streamingActions.setStreaming(false);
       streamingActions.setConnected(false);
+      // Track streaming completion
+      const durationMs = Date.now() - requestStartTime.current;
+      trackStreamingCompleted(streamingMovies.length, durationMs);
     },
     onError: (err) => {
       streamingActions.setStreamingError(err);
       streamingActions.setStreaming(false);
       streamingActions.setConnected(false);
+      // Track streaming error
+      trackStreamingError(err.message);
     },
   });
+
+  // Track when recommendations are successfully received
+  const prevRecommendationsLength = useRef(0);
+  useEffect(() => {
+    // Only track when we go from 0 to some recommendations (initial load)
+    if (recommendations.length > 0 && prevRecommendationsLength.current === 0 && !isLoading) {
+      const durationMs = Date.now() - requestStartTime.current;
+      trackRecommendationsReceived(recommendations.length, durationMs);
+    }
+    prevRecommendationsLength.current = recommendations.length;
+  }, [recommendations.length, isLoading, trackRecommendationsReceived]);
 
   // Clean up streaming on unmount
   useEffect(() => {
@@ -118,10 +151,28 @@ export function HomeContent({ testId }: HomeContentProps) {
       // Store user input in context
       userInputActions.setUserInput(input);
 
+      // Track the request start time
+      requestStartTime.current = Date.now();
+
+      // Track analytics - recommendations requested
+      const mood = input.mood as MoodValue | undefined;
+      if (mood) {
+        trackRecommendationsRequested(
+          mood,
+          input.genres?.length ?? 0,
+          input.platforms?.length ?? 0
+        );
+      }
+
       if (fetchMode === 'streaming') {
         // Clear previous streaming state
         streamingActions.clearStreaming();
         streamingActions.setStreaming(true);
+
+        // Track streaming started
+        if (mood) {
+          trackStreamingStarted(mood);
+        }
 
         // Start streaming
         startStreaming(input);
@@ -132,9 +183,11 @@ export function HomeContent({ testId }: HomeContentProps) {
 
         try {
           await fetchRecommendations(input);
-          // The hook will handle success/error internally
-        } catch {
-          // Error is handled by the hook
+          // Note: Success tracking is handled in the effect that watches recommendations
+        } catch (err) {
+          // Track error
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          trackRecommendationsError(errorMessage);
         } finally {
           recommendationsActions.setLoading(false);
         }
@@ -147,6 +200,9 @@ export function HomeContent({ testId }: HomeContentProps) {
       streamingActions,
       fetchRecommendations,
       startStreaming,
+      trackRecommendationsRequested,
+      trackRecommendationsError,
+      trackStreamingStarted,
     ]
   );
 
@@ -158,15 +214,22 @@ export function HomeContent({ testId }: HomeContentProps) {
       const newMode = mode as FetchMode;
       appActions.setFetchMode(newMode);
 
+      // Track mode switch
+      trackModeSwitched(newMode);
+
       // Clear results when switching modes
       if (newMode === 'streaming') {
         recommendationsActions.clearRecommendations();
       } else {
         streamingActions.clearStreaming();
         stopStreaming();
+        // Track streaming stopped if it was running
+        if (isStreaming) {
+          trackStreamingStopped();
+        }
       }
     },
-    [appActions, recommendationsActions, streamingActions, stopStreaming]
+    [appActions, recommendationsActions, streamingActions, stopStreaming, isStreaming, trackModeSwitched, trackStreamingStopped]
   );
 
   /**
@@ -178,12 +241,15 @@ export function HomeContent({ testId }: HomeContentProps) {
     streamingActions.clearStreaming();
     resetRecommendations();
     resetStreaming();
+    // Track filters/form reset
+    trackFiltersReset();
   }, [
     userInputActions,
     recommendationsActions,
     streamingActions,
     resetRecommendations,
     resetStreaming,
+    trackFiltersReset,
   ]);
 
   /**
