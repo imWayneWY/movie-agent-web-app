@@ -23,6 +23,11 @@ jest.mock('@/components/providers', () => ({
   ),
 }));
 
+// Mock error-handling components
+jest.mock('@/components/error-handling', () => ({
+  Toaster: () => <div data-testid="toaster" />,
+}));
+
 // Mock the Header and Footer
 jest.mock('@/components/layout', () => ({
   Header: () => <header data-testid="header">Header</header>,
