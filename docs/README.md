@@ -184,8 +184,18 @@ Future enhancements planned:
 
 ## 📚 Documentation
 
-- [Product Specification](./SPEC.md) — Feature requirements and decisions
-- [Technical Design](./DevDesign.md) — Architecture and implementation details
+| Document | Description |
+|----------|-------------|
+| [README.md](./README.md) | This file - overview and quick start |
+| [SPEC.md](./SPEC.md) | Product specification and feature requirements |
+| [DevDesign.md](./DevDesign.md) | Technical architecture and implementation details |
+| [BluePrint.md](./BluePrint.md) | Development blueprint and step-by-step guide |
+| [DEVELOPER.md](./DEVELOPER.md) | Developer guide with code organization and best practices |
+| [API.md](./API.md) | Complete API endpoint documentation |
+| [COMPONENTS.md](./COMPONENTS.md) | Component usage guide with examples |
+| [ENVIRONMENT.md](./ENVIRONMENT.md) | Environment variable reference |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common issues and solutions |
+| [ANALYTICS.md](./ANALYTICS.md) | Analytics integration documentation |
 
 ## 🤝 Contributing
 
