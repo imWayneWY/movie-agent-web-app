@@ -1,0 +1,63 @@
+{
+  "name": "movie-agent-web-app",
+  "description": "Azure App Service configuration for Movie Agent Web App",
+  "settings": {
+    "general": {
+      "alwaysOn": true,
+      "http20Enabled": true,
+      "minTlsVersion": "1.2",
+      "ftpsState": "Disabled",
+      "webSocketsEnabled": true
+    },
+    "platform": {
+      "nodeVersion": "~20",
+      "use32BitWorkerProcess": false
+    },
+    "startupCommand": "npm run start",
+    "healthCheckPath": "/api/health"
+  },
+  "appSettings": [
+    {
+      "name": "NODE_ENV",
+      "value": "production"
+    },
+    {
+      "name": "WEBSITE_NODE_DEFAULT_VERSION",
+      "value": "~20"
+    },
+    {
+      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+      "value": "false"
+    },
+    {
+      "name": "WEBSITE_RUN_FROM_PACKAGE",
+      "value": "1"
+    }
+  ],
+  "cors": {
+    "allowedOrigins": [
+      "https://movie-agent-web-app.azurewebsites.net"
+    ],
+    "supportCredentials": false
+  },
+  "logging": {
+    "applicationLogging": {
+      "fileSystem": {
+        "level": "Information"
+      }
+    },
+    "httpLogging": {
+      "fileSystem": {
+        "enabled": true,
+        "retentionInMb": 35,
+        "retentionInDays": 7
+      }
+    },
+    "detailedErrorLogging": {
+      "enabled": true
+    },
+    "failedRequestsTracing": {
+      "enabled": true
+    }
+  }
+}
