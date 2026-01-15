@@ -8,12 +8,15 @@
  * - Provider configuration (Gemini/Azure)
  */
 
+import { MovieAgentFactory, type MovieAgent } from 'movie-agent';
 import type {
   AgentRequest,
   AgentResponse,
   AgentConfig,
   RetryOptions,
   StreamEvent,
+  MovieRecommendation,
+  PlatformAvailability,
 } from '@/types';
 import { AppError } from '@/lib/errors';
 import { env } from '@/config/env';
@@ -81,6 +84,7 @@ function isRetryableError(error: unknown): boolean {
 export class MovieAgentService {
   private config: Required<AgentConfig>;
   private retryOptions: RetryOptions;
+  private agent: MovieAgent;
 
   constructor(config?: Partial<AgentConfig>) {
     this.config = {
@@ -96,6 +100,47 @@ export class MovieAgentService {
       maxDelay: DEFAULT_MAX_RETRY_DELAY,
       backoffMultiplier: DEFAULT_BACKOFF_MULTIPLIER,
     };
+
+    // Initialize the movie-agent
+    this.agent = this.createAgent();
+  }
+
+  /**
+   * Create a movie-agent instance with current config
+   */
+  private createAgent(): MovieAgent {
+    const baseConfig = {
+      tmdbApiKey: env.tmdbApiKey,
+      tmdbRegion: 'CA' as const,
+    };
+
+    if (this.config.provider === 'azure') {
+      const azureApiKey = env.azureOpenAiApiKey;
+      const azureEndpoint = env.azureOpenAiEndpoint;
+      const azureDeployment = env.azureOpenAiDeployment;
+
+      if (!azureApiKey || !azureEndpoint || !azureDeployment) {
+        throw new AppError(
+          'Azure OpenAI configuration is incomplete. Please set AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, and AZURE_OPENAI_DEPLOYMENT.',
+          'AGENT_ERROR',
+          { statusCode: 500 }
+        );
+      }
+
+      return MovieAgentFactory.create({
+        ...baseConfig,
+        llmProvider: 'azure',
+        azureOpenAiApiKey: azureApiKey,
+        azureOpenAiEndpoint: azureEndpoint,
+        azureOpenAiDeployment: azureDeployment,
+      });
+    }
+
+    return MovieAgentFactory.create({
+      ...baseConfig,
+      llmProvider: 'gemini',
+      geminiApiKey: env.geminiApiKey,
+    });
   }
 
   /**
@@ -115,25 +160,42 @@ export class MovieAgentService {
     // Validate request
     this.validateRequest(request);
 
-    // TODO: Replace with actual movie-agent streaming call
-    // In production, this will call the movie-agent package's streaming method:
-    // const agent = new MovieAgent({ provider: this.config.provider });
-    // for await (const event of agent.streamRecommend(request)) {
-    //   yield event;
-    // }
+    // Map platform IDs to display names expected by movie-agent
+    const platformMap: Record<string, string> = {
+      'netflix': 'Netflix',
+      'prime': 'Prime Video',
+      'disney': 'Disney+',
+      'crave': 'Crave',
+      'apple': 'Apple TV+',
+      'paramount': 'Paramount+',
+    };
 
-    // Mock implementation for testing
-    if (process.env.NODE_ENV === 'test') {
-      // This will be mocked in tests
-      throw new Error('Stream agent not implemented - should be mocked in tests');
+    // Build input for movie-agent - only include defined properties
+    const agentInput: Record<string, unknown> = {};
+    if (request.mood) agentInput.mood = request.mood;
+    if (request.genres) agentInput.genre = request.genres;
+    if (request.platforms) agentInput.platforms = request.platforms.map(p => platformMap[p] || p);
+    if (request.runtime) agentInput.runtime = request.runtime;
+    if (request.releaseYear) agentInput.releaseYear = request.releaseYear;
+
+    // Use movie-agent's stream method
+    let streamText = '';
+    
+    try {
+      await this.agent.stream(agentInput, (chunk: string) => {
+        streamText += chunk;
+      });
+
+      // Yield the complete text as a single event after streaming completes
+      yield { type: 'text' as const, data: streamText };
+      yield { type: 'done' as const, data: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Stream failed';
+      yield { 
+        type: 'error' as const, 
+        data: message 
+      };
     }
-
-    // Production placeholder
-    throw new AppError(
-      'Movie agent streaming integration not yet implemented',
-      'AGENT_ERROR',
-      { statusCode: 501 }
-    );
   }
 
   /**
@@ -185,30 +247,98 @@ export class MovieAgentService {
 
   /**
    * Call the movie-agent package
-   * This is a placeholder that will be replaced with actual movie-agent integration
    */
   private async callAgent(request: AgentRequest): Promise<AgentResponse> {
     // Validate request
     this.validateRequest(request);
 
-    // TODO: Replace with actual movie-agent call
-    // For now, this is a mock implementation
-    // In production, this will call the movie-agent package:
-    // const agent = new MovieAgent({ provider: this.config.provider });
-    // const result = await agent.recommend(request);
+    // Map platform IDs to display names expected by movie-agent
+    const platformMap: Record<string, string> = {
+      'netflix': 'Netflix',
+      'prime': 'Prime Video',
+      'disney': 'Disney+',
+      'crave': 'Crave',
+      'apple': 'Apple TV+',
+      'paramount': 'Paramount+',
+    };
 
-    // Mock implementation for testing
-    if (process.env.NODE_ENV === 'test') {
-      // This will be mocked in tests
-      throw new Error('Agent not implemented - should be mocked in tests');
+    // Build input for movie-agent - only include defined properties
+    const agentInput: Record<string, unknown> = {};
+    if (request.mood) agentInput.mood = request.mood;
+    if (request.genres) agentInput.genre = request.genres;
+    if (request.platforms) agentInput.platforms = request.platforms.map(p => platformMap[p] || p);
+    if (request.runtime) agentInput.runtime = request.runtime;
+    if (request.releaseYear) agentInput.releaseYear = request.releaseYear;
+
+    const result = await this.agent.getRecommendations(agentInput);
+
+    // Check for error response
+    if ('error' in result && result.error) {
+      throw new AppError(
+        result.message || 'Movie agent error',
+        'AGENT_ERROR',
+        { statusCode: 500 }
+      );
     }
 
-    // Production placeholder
-    throw new AppError(
-      'Movie agent integration not yet implemented',
-      'AGENT_ERROR',
-      { statusCode: 501 }
-    );
+    // At this point, result is AgentResponse (not ErrorResponse)
+    // Use type assertion via unknown to handle movie-agent's return type
+    const agentResult = result as unknown as { 
+      recommendations: Array<{
+        tmdbId?: number;
+        title: string;
+        description?: string;
+        overview?: string;
+        posterPath?: string | null;
+        releaseYear?: number | string;
+        runtime?: number;
+        genres?: string[];
+        streamingPlatforms?: Array<{ name: string; logo?: string; link?: string; type?: string }>;
+        matchReason?: string;
+        voteAverage?: number;
+        voteCount?: number;
+        originalLanguage?: string;
+      }> 
+    };
+
+    // Map movie-agent response to our types
+    const recommendations: MovieRecommendation[] = agentResult.recommendations.map((rec, index) => {
+      const platforms: PlatformAvailability[] = (rec.streamingPlatforms || []).map((p) => {
+        const platform: PlatformAvailability = {
+          id: p.name.toLowerCase().replace(/[^a-z]/g, '') as PlatformAvailability['id'],
+          name: p.name,
+          logo: p.logo || `/platforms/${p.name.toLowerCase().replace(/[^a-z]/g, '')}.svg`,
+        };
+        if (p.link) {
+          platform.url = p.link;
+        }
+        return platform;
+      });
+
+      // Use description if overview is not available
+      const overview = rec.overview || rec.description || '';
+      
+      // Convert releaseYear to string for releaseDate
+      const releaseDate = rec.releaseYear ? String(rec.releaseYear) : '';
+
+      return {
+        id: rec.tmdbId ?? index + 1, // Use index as fallback ID
+        title: rec.title,
+        overview,
+        posterPath: rec.posterPath || null,
+        backdropPath: null,
+        releaseDate,
+        runtime: rec.runtime || null,
+        voteAverage: rec.voteAverage || 0,
+        voteCount: rec.voteCount || 0,
+        genres: rec.genres || [],
+        originalLanguage: rec.originalLanguage || 'en',
+        matchReason: rec.matchReason || '',
+        platforms,
+      };
+    });
+
+    return { recommendations };
   }
 
   /**

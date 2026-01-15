@@ -91,7 +91,23 @@ export function HomeContent({ testId }: HomeContentProps) {
   const {
     fetchRecommendations,
     reset: resetRecommendations,
+    recommendations: hookRecommendations,
+    error: hookError,
   } = useRecommendations();
+
+  // Sync hook state to context when recommendations change
+  React.useEffect(() => {
+    if (hookRecommendations.length > 0) {
+      recommendationsActions.setRecommendations(hookRecommendations);
+    }
+  }, [hookRecommendations, recommendationsActions]);
+
+  // Sync hook error to context
+  React.useEffect(() => {
+    if (hookError) {
+      recommendationsActions.setError(hookError);
+    }
+  }, [hookError, recommendationsActions]);
 
   const {
     startStreaming,

@@ -340,8 +340,8 @@ export function MovieList({
       role="list"
       aria-label="Movie recommendations"
     >
-      {movies.map((movie) => (
-        <div key={movie.id} role="listitem">
+      {movies.map((movie, index) => (
+        <div key={movie.id ?? `movie-${index}`} role="listitem">
           <MovieCard movie={movie} />
         </div>
       ))}
