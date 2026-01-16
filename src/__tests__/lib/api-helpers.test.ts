@@ -57,13 +57,27 @@ describe('Response Builders', () => {
       const data = { message: 'Success' };
       successResponse(data);
 
-      expect(NextResponse.json).toHaveBeenCalledWith(data, { status: 200 });
+      expect(NextResponse.json).toHaveBeenCalledWith(data, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
     });
 
     it('should accept custom status code', () => {
       successResponse({ id: 1 }, 201);
 
-      expect(NextResponse.json).toHaveBeenCalledWith({ id: 1 }, { status: 201 });
+      expect(NextResponse.json).toHaveBeenCalledWith({ id: 1 }, {
+        status: 201,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
     });
   });
 

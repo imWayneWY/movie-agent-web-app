@@ -200,6 +200,7 @@ export function useRecommendations(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(request),
+          cache: 'no-store', // Prevent browser caching
           ...(options.signal && { signal: options.signal }),
         });
 

@@ -15,13 +15,20 @@ import { AppError, wrapError, createErrorResponse } from './errors';
 // =============================================================================
 
 /**
- * Build a successful JSON response
+ * Build a successful JSON response with no-cache headers
  */
 export function successResponse<T>(
   data: T,
   status: number = HTTP_STATUS.OK
 ): NextResponse<T> {
-  return NextResponse.json(data, { status });
+  return NextResponse.json(data, {
+    status,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
+  });
 }
 
 /**

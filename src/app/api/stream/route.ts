@@ -6,6 +6,10 @@
  */
 
 import { NextRequest } from 'next/server';
+
+// Force dynamic rendering - disable caching for this route
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 import type { StreamRequest, AgentRequest, StreamEventType } from '@/types';
 import { MovieAgentService } from '@/services';
 import { rateLimiters } from '@/middleware';

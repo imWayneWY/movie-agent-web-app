@@ -179,6 +179,7 @@ export async function createSSEConnection(
         'Accept': 'text/event-stream',
       },
       body: JSON.stringify(body),
+      cache: 'no-store', // Prevent browser caching
     };
 
     if (signal) {
