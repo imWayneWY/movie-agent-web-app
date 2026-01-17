@@ -289,7 +289,7 @@ export class MovieAgentService {
         title: string;
         description?: string;
         overview?: string;
-        posterPath?: string | null;
+        posterUrl?: string | null;
         releaseYear?: number | string;
         runtime?: number;
         genres?: string[];
@@ -321,11 +321,17 @@ export class MovieAgentService {
       // Convert releaseYear to string for releaseDate
       const releaseDate = rec.releaseYear ? String(rec.releaseYear) : '';
 
+      // Extract posterPath from full posterUrl if available
+      // posterUrl format: https://image.tmdb.org/t/p/w500/abc123.jpg
+      const posterPath = rec.posterUrl 
+        ? rec.posterUrl.replace(/^https:\/\/image\.tmdb\.org\/t\/p\/w\d+/, '')
+        : null;
+
       return {
         id: rec.tmdbId ?? index + 1, // Use index as fallback ID
         title: rec.title,
         overview,
-        posterPath: rec.posterPath || null,
+        posterPath,
         backdropPath: null,
         releaseDate,
         runtime: rec.runtime || null,
