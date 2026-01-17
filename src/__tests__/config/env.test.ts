@@ -72,18 +72,18 @@ describe('Environment Configuration', () => {
       expect(env.llmProvider).toBe('gemini');
     });
 
-    it('should throw for missing required TMDB_API_KEY', async () => {
-      delete process.env['TMDB_API_KEY'];
+    it('should throw for missing required TMDB_ACCESS_TOKEN', async () => {
+      delete process.env['TMDB_ACCESS_TOKEN'];
       const { env } = await import('@/config/env');
       
-      expect(() => env.tmdbApiKey).toThrow('Missing required environment variable: TMDB_API_KEY');
+      expect(() => env.tmdbAccessToken).toThrow('Missing required environment variable: TMDB_ACCESS_TOKEN');
     });
 
-    it('should return TMDB_API_KEY when set', async () => {
-      process.env['TMDB_API_KEY'] = 'test-api-key';
+    it('should return TMDB_ACCESS_TOKEN when set', async () => {
+      process.env['TMDB_ACCESS_TOKEN'] = 'test-access-token';
       const { env } = await import('@/config/env');
       
-      expect(env.tmdbApiKey).toBe('test-api-key');
+      expect(env.tmdbAccessToken).toBe('test-access-token');
     });
 
     it('should throw for invalid LLM_PROVIDER', async () => {

@@ -16,6 +16,11 @@ import type { AgentRequest, AgentResponse } from '@/types';
 jest.mock('@/config/env', () => ({
   env: {
     llmProvider: 'gemini',
+    tmdbAccessToken: 'test-tmdb-access-token',
+    geminiApiKey: 'test-gemini-api-key',
+    azureOpenAiApiKey: 'test-azure-api-key',
+    azureOpenAiEndpoint: 'https://test.openai.azure.com/',
+    azureOpenAiDeployment: 'test-deployment',
   },
 }));
 

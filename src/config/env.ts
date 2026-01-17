@@ -27,8 +27,8 @@ function getOptionalEnv(key: string, defaultValue: string): string {
  */
 export const env = {
   // TMDb API
-  get tmdbApiKey(): string {
-    return getRequiredEnv('TMDB_API_KEY');
+  get tmdbAccessToken(): string {
+    return getRequiredEnv('TMDB_ACCESS_TOKEN');
   },
 
   // LLM Provider

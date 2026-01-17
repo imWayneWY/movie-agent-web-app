@@ -75,7 +75,7 @@ npm run dev -- -p 3001
 
 ### Missing Environment Variable Error
 
-**Symptom:** `Error: Missing required environment variable: TMDB_API_KEY`
+**Symptom:** `Error: Missing required environment variable: TMDB_ACCESS_TOKEN`
 
 **Solution:**
 
@@ -107,11 +107,11 @@ cat .env.local | grep TMDB
 
 ```env
 # ✅ Correct
-TMDB_API_KEY=abc123
+TMDB_ACCESS_TOKEN=eyJhbGci...
 
 # ❌ Wrong
-TMDB_API_KEY = abc123
-TMDB_API_KEY="abc123"  # Only needed if value has spaces
+TMDB_ACCESS_TOKEN = eyJhbGci...
+TMDB_ACCESS_TOKEN="eyJhbGci..."  # Only needed if value has spaces
 ```
 
 ### Azure OpenAI Configuration Issues

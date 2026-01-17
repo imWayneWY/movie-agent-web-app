@@ -176,7 +176,7 @@ Configure these in Azure App Service > Configuration > Application settings:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `TMDB_API_KEY` | Yes | TMDb API key |
+| `TMDB_ACCESS_TOKEN` | Yes | TMDb access token |
 | `LLM_PROVIDER` | Yes | `gemini` or `azure` |
 | `GEMINI_API_KEY` | If using Gemini | Gemini API key |
 | `AZURE_OPENAI_API_KEY` | If using Azure | Azure OpenAI key |
@@ -192,7 +192,7 @@ az webapp config appsettings set \
   --name YOUR_APP_NAME \
   --resource-group YOUR_RESOURCE_GROUP \
   --settings \
-    TMDB_API_KEY="your_key" \
+    TMDB_ACCESS_TOKEN="your_token" \
     LLM_PROVIDER="gemini" \
     GEMINI_API_KEY="your_key"
 ```
@@ -213,14 +213,14 @@ For sensitive values, use Key Vault references:
 # Store secret in Key Vault
 az keyvault secret set \
   --vault-name YOUR_KEYVAULT_NAME \
-  --name "TMDB-API-KEY" \
-  --value "your_key"
+  --name "TMDB-ACCESS-TOKEN" \
+  --value "your_token"
 
 # Reference in App Service
 az webapp config appsettings set \
   --name YOUR_APP_NAME \
   --resource-group YOUR_RESOURCE_GROUP \
-  --settings TMDB_API_KEY="@Microsoft.KeyVault(VaultName=YOUR_KEYVAULT_NAME;SecretName=TMDB-API-KEY)"
+  --settings TMDB_ACCESS_TOKEN="@Microsoft.KeyVault(VaultName=YOUR_KEYVAULT_NAME;SecretName=TMDB-ACCESS-TOKEN)"
 ```
 
 ---

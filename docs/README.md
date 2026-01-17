@@ -60,7 +60,7 @@ Edit `.env.local` with your API keys:
 
 ```bash
 # Required
-TMDB_API_KEY=your_tmdb_api_key
+TMDB_ACCESS_TOKEN=your_tmdb_access_token
 
 # LLM Provider (choose one)
 LLM_PROVIDER=gemini

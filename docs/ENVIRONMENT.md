@@ -15,7 +15,7 @@ The application uses environment variables for configuration to:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `TMDB_API_KEY` | **Yes** | API key for The Movie Database (TMDb). [Get one here](https://www.themoviedb.org/settings/api) |
+| `TMDB_ACCESS_TOKEN` | **Yes** | Access token for The Movie Database (TMDb). [Get one here](https://www.themoviedb.org/settings/api) |
 
 ### LLM Provider
 
@@ -72,7 +72,7 @@ cp .env.example .env.local
 
 ```env
 # Required
-TMDB_API_KEY=your_tmdb_api_key
+TMDB_ACCESS_TOKEN=your_tmdb_access_token
 
 # LLM Provider
 LLM_PROVIDER=gemini
@@ -86,7 +86,7 @@ NEXT_PUBLIC_APPINSIGHTS_CONNECTION_STRING=InstrumentationKey=xxx;IngestionEndpoi
 
 ```env
 # Required
-TMDB_API_KEY=your_tmdb_api_key
+TMDB_ACCESS_TOKEN=your_tmdb_access_token
 
 # LLM Provider
 LLM_PROVIDER=azure
@@ -125,7 +125,7 @@ services:
   app:
     build: .
     environment:
-      - TMDB_API_KEY=${TMDB_API_KEY}
+      - TMDB_ACCESS_TOKEN=${TMDB_ACCESS_TOKEN}
       - LLM_PROVIDER=${LLM_PROVIDER}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     env_file:
@@ -145,7 +145,7 @@ services:
 The app validates environment variables on startup. Missing required variables will throw an error:
 
 ```
-Error: Missing required environment variable: TMDB_API_KEY
+Error: Missing required environment variable: TMDB_ACCESS_TOKEN
 ```
 
 ## Accessing Environment Variables

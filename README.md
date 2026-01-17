@@ -51,7 +51,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `TMDB_API_KEY` | Yes | The Movie Database API key |
+| `TMDB_ACCESS_TOKEN` | Yes | The Movie Database access token |
 | `LLM_PROVIDER` | Yes | AI provider: `gemini` or `azure` |
 | `GEMINI_API_KEY` | When using Gemini | Google Gemini API key |
 | `AZURE_OPENAI_API_KEY` | When using Azure | Azure OpenAI API key |

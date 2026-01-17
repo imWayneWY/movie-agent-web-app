@@ -32,6 +32,8 @@ jest.mock('@/hooks/use-recommendations', () => ({
   useRecommendations: () => ({
     fetchRecommendations: mockFetchRecommendations,
     reset: mockResetRecommendations,
+    recommendations: [],
+    error: null,
   }),
 }));
 

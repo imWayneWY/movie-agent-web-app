@@ -110,7 +110,7 @@ export class MovieAgentService {
    */
   private createAgent(): MovieAgent {
     const baseConfig = {
-      tmdbApiKey: env.tmdbApiKey,
+      tmdbAccessToken: env.tmdbAccessToken,
       tmdbRegion: 'CA' as const,
     };
 
