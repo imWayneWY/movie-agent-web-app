@@ -9,7 +9,6 @@
 
 import * as React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BotContainer,
   BotContainerSkeleton,
@@ -18,22 +17,12 @@ import {
 } from '@/components/ui';
 import {
   useAppContext,
-  type FetchMode,
 } from '@/components/providers';
 import { useRecommendations } from '@/hooks/use-recommendations';
 import { useStreaming } from '@/hooks/use-streaming';
 import { useAnalytics } from '@/hooks/use-analytics';
 import type { UserInput, MoodValue } from '@/types';
 import { cn } from '@/lib/utils';
-
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
-const TAB_LABELS = {
-  structured: 'Quick Results',
-  streaming: 'AI Insights',
-} as const;
 
 // =============================================================================
 // INNER CONTENT COMPONENT
@@ -54,17 +43,14 @@ export function HomeContent({ testId }: HomeContentProps) {
     userInputActions,
     recommendationsActions,
     streamingActions,
-    appActions,
   } = useAppContext();
 
   const {
-    fetchMode,
     userInput,
     recommendations,
     isLoading,
     error,
     streamingContent,
-    streamingMovies,
     isStreaming,
     isConnected,
     isStreamingComplete,
@@ -79,8 +65,6 @@ export function HomeContent({ testId }: HomeContentProps) {
     trackStreamingStarted,
     trackStreamingCompleted,
     trackStreamingError,
-    trackStreamingStopped,
-    trackModeSwitched,
     trackFiltersReset,
   } = useAnalytics();
 
@@ -92,8 +76,13 @@ export function HomeContent({ testId }: HomeContentProps) {
     fetchRecommendations,
     reset: resetRecommendations,
     recommendations: hookRecommendations,
+    isLoading: hookIsLoading,
     error: hookError,
   } = useRecommendations();
+
+  // Derive effective loading state from both hook and context
+  // Context isLoading is used for test mocking, hook isLoading for real fetches
+  const effectiveIsLoading = isLoading || hookIsLoading;
 
   // Sync hook state to context when recommendations change
   React.useEffect(() => {
@@ -126,7 +115,7 @@ export function HomeContent({ testId }: HomeContentProps) {
       streamingActions.setConnected(false);
       // Track streaming completion
       const durationMs = Date.now() - requestStartTime.current;
-      trackStreamingCompleted(streamingMovies.length, durationMs);
+      trackStreamingCompleted(recommendations.length, durationMs);
     },
     onError: (err) => {
       streamingActions.setStreamingError(err);
@@ -141,12 +130,12 @@ export function HomeContent({ testId }: HomeContentProps) {
   const prevRecommendationsLength = useRef(0);
   useEffect(() => {
     // Only track when we go from 0 to some recommendations (initial load)
-    if (recommendations.length > 0 && prevRecommendationsLength.current === 0 && !isLoading) {
+    if (recommendations.length > 0 && prevRecommendationsLength.current === 0 && !effectiveIsLoading) {
       const durationMs = Date.now() - requestStartTime.current;
       trackRecommendationsReceived(recommendations.length, durationMs);
     }
     prevRecommendationsLength.current = recommendations.length;
-  }, [recommendations.length, isLoading, trackRecommendationsReceived]);
+  }, [recommendations.length, effectiveIsLoading, trackRecommendationsReceived]);
 
   // Clean up streaming on unmount
   useEffect(() => {
@@ -180,37 +169,28 @@ export function HomeContent({ testId }: HomeContentProps) {
         );
       }
 
-      if (fetchMode === 'streaming') {
-        // Clear previous streaming state
-        streamingActions.clearStreaming();
-        streamingActions.setStreaming(true);
+      // Clear previous states
+      streamingActions.clearStreaming();
+      recommendationsActions.clearRecommendations();
 
-        // Track streaming started
-        if (mood) {
-          trackStreamingStarted(mood);
-        }
+      // Start streaming for AI insights
+      streamingActions.setStreaming(true);
+      if (mood) {
+        trackStreamingStarted(mood);
+      }
+      startStreaming(input);
 
-        // Start streaming
-        startStreaming(input);
-      } else {
-        // Clear previous recommendations
-        recommendationsActions.clearRecommendations();
-        recommendationsActions.setLoading(true);
-
-        try {
-          await fetchRecommendations(input);
-          // Note: Success tracking is handled in the effect that watches recommendations
-        } catch (err) {
-          // Track error
-          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-          trackRecommendationsError(errorMessage);
-        } finally {
-          recommendationsActions.setLoading(false);
-        }
+      // Also fetch structured recommendations for the movie list
+      try {
+        await fetchRecommendations(input);
+        // Note: Success tracking is handled in the effect that watches recommendations
+      } catch (err) {
+        // Track error
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        trackRecommendationsError(errorMessage);
       }
     },
     [
-      fetchMode,
       userInputActions,
       recommendationsActions,
       streamingActions,
@@ -220,32 +200,6 @@ export function HomeContent({ testId }: HomeContentProps) {
       trackRecommendationsError,
       trackStreamingStarted,
     ]
-  );
-
-  /**
-   * Handle fetch mode change
-   */
-  const handleModeChange = useCallback(
-    (mode: string) => {
-      const newMode = mode as FetchMode;
-      appActions.setFetchMode(newMode);
-
-      // Track mode switch
-      trackModeSwitched(newMode);
-
-      // Clear results when switching modes
-      if (newMode === 'streaming') {
-        recommendationsActions.clearRecommendations();
-      } else {
-        streamingActions.clearStreaming();
-        stopStreaming();
-        // Track streaming stopped if it was running
-        if (isStreaming) {
-          trackStreamingStopped();
-        }
-      }
-    },
-    [appActions, recommendationsActions, streamingActions, stopStreaming, isStreaming, trackModeSwitched, trackStreamingStopped]
   );
 
   /**
@@ -282,12 +236,12 @@ export function HomeContent({ testId }: HomeContentProps) {
   // ==========================================================================
 
   const hasResults = recommendations.length > 0;
-  const hasStreamingContent = streamingContent.length > 0 || streamingMovies.length > 0;
-  const showResults = fetchMode === 'structured' && (hasResults || isLoading || error);
-  const showStreaming = fetchMode === 'streaming' && (hasStreamingContent || isStreaming || streamingError);
+  const hasStreamingContent = streamingContent.length > 0;
+  const showResults = hasResults || effectiveIsLoading || error;
+  const showStreaming = hasStreamingContent || isStreaming || streamingError;
 
   // Determine if the form is actively processing
-  const isProcessing = fetchMode === 'streaming' ? isStreaming : isLoading;
+  const isProcessing = isStreaming || effectiveIsLoading;
 
   // ==========================================================================
   // RENDER
@@ -312,119 +266,69 @@ export function HomeContent({ testId }: HomeContentProps) {
         </p>
       </header>
 
-      {/* Mode Selector */}
-      <div className="flex justify-center mb-6">
-        <Tabs
-          value={fetchMode}
-          onValueChange={handleModeChange}
-          className="w-full max-w-md"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger
-              value="structured"
-              data-testid="mode-structured"
-              disabled={isProcessing}
-            >
-              {TAB_LABELS.structured}
-            </TabsTrigger>
-            <TabsTrigger
-              value="streaming"
-              data-testid="mode-streaming"
-              disabled={isProcessing}
-            >
-              {TAB_LABELS.streaming}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:gap-8 lg:grid-cols-[minmax(320px,400px)_1fr]">
-        {/* Left Column - Form */}
-        <div className="order-1">
+        {/* Left Column - Form + AI Insights */}
+        <div className="order-1 space-y-6">
           <BotContainer
             onSubmit={handleSubmit}
             isLoading={isProcessing}
             showReset={hasResults || hasStreamingContent}
             onReset={handleReset}
             defaultFiltersExpanded={false}
-            className="sticky top-4"
           />
+
+          {/* AI Insights Section */}
+          <div data-testid="ai-insights-section">
+            {showStreaming ? (
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">AI Insights</h2>
+                <StreamingOutput
+                  content={streamingContent}
+                  isStreaming={isStreaming}
+                  isConnected={isConnected}
+                  isComplete={isStreamingComplete}
+                  enableTypingAnimation={true}
+                  enableMarkdown={true}
+                  showCursor={true}
+                />
+
+                {/* Streaming Error */}
+                {streamingError && (
+                  <div
+                    className="p-4 rounded-lg bg-destructive/10 text-destructive"
+                    role="alert"
+                    data-testid="streaming-error"
+                  >
+                    <p className="font-medium">
+                      {streamingError.message || 'An error occurred during streaming'}
+                    </p>
+                    <button
+                      onClick={handleRetry}
+                      className="mt-2 text-sm underline hover:no-underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        {/* Right Column - Results */}
-        <div className="order-2 min-h-[300px]">
-          {/* Structured Results */}
-          {fetchMode === 'structured' && (
-            <div data-testid="results-structured">
-              {showResults ? (
-                <MovieList
-                  movies={recommendations}
-                  isLoading={isLoading}
-                  error={error}
-                  onRetry={handleRetry}
-                  emptyTitle="No recommendations yet"
-                  emptyDescription="Select a mood and click 'Get Recommendations' to discover movies that match your vibe."
-                />
-              ) : (
-                <EmptyState mode="structured" />
-              )}
-            </div>
-          )}
-
-          {/* Streaming Results */}
-          {fetchMode === 'streaming' && (
-            <div data-testid="results-streaming">
-              {showStreaming ? (
-                <div className="space-y-6">
-                  {/* Streaming Text Content */}
-                  <StreamingOutput
-                    content={streamingContent}
-                    isStreaming={isStreaming}
-                    isConnected={isConnected}
-                    isComplete={isStreamingComplete}
-                    enableTypingAnimation={true}
-                    enableMarkdown={true}
-                    showCursor={true}
-                  />
-
-                  {/* Streaming Movies */}
-                  {streamingMovies.length > 0 && (
-                    <div className="mt-6">
-                      <h2 className="text-xl font-semibold mb-4">
-                        Recommended Movies
-                      </h2>
-                      <MovieList
-                        movies={streamingMovies}
-                        isLoading={false}
-                        error={null}
-                      />
-                    </div>
-                  )}
-
-                  {/* Streaming Error */}
-                  {streamingError && (
-                    <div
-                      className="p-4 rounded-lg bg-destructive/10 text-destructive"
-                      role="alert"
-                      data-testid="streaming-error"
-                    >
-                      <p className="font-medium">
-                        {streamingError.message || 'An error occurred during streaming'}
-                      </p>
-                      <button
-                        onClick={handleRetry}
-                        className="mt-2 text-sm underline hover:no-underline"
-                      >
-                        Try again
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <EmptyState mode="streaming" />
-              )}
-            </div>
+        {/* Right Column - Movie List */}
+        <div className="order-2 min-h-[300px]" data-testid="results-section">
+          {showResults ? (
+            <MovieList
+              movies={recommendations}
+              isLoading={effectiveIsLoading}
+              error={error}
+              onRetry={handleRetry}
+              emptyTitle="No recommendations yet"
+              emptyDescription="Select a mood and click 'Get Recommendations' to discover movies that match your vibe."
+            />
+          ) : (
+            <EmptyState />
           )}
         </div>
       </div>
@@ -436,11 +340,7 @@ export function HomeContent({ testId }: HomeContentProps) {
 // EMPTY STATE COMPONENT
 // =============================================================================
 
-export interface EmptyStateProps {
-  mode: FetchMode;
-}
-
-export function EmptyState({ mode }: EmptyStateProps) {
+export function EmptyState() {
   return (
     <div
       className={cn(
@@ -454,9 +354,7 @@ export function EmptyState({ mode }: EmptyStateProps) {
       <div className="text-6xl mb-4">🎬</div>
       <h2 className="text-xl font-semibold mb-2">Ready to discover?</h2>
       <p className="text-muted-foreground max-w-md">
-        {mode === 'structured'
-          ? 'Select a mood and optional filters, then click "Get Recommendations" to find your next favorite movie.'
-          : 'Select a mood and let our AI guide you through personalized movie recommendations with detailed insights.'}
+        Select a mood and optional filters, then click &quot;Get Recommendations&quot; to find your next favorite movie with AI-powered insights.
       </p>
     </div>
   );
@@ -480,11 +378,6 @@ export function HomeLoading() {
         <div className="h-10 w-64 bg-muted rounded mx-auto mb-2" />
         <div className="h-6 w-48 bg-muted rounded mx-auto" />
       </header>
-
-      {/* Mode Selector Skeleton */}
-      <div className="flex justify-center mb-6">
-        <div className="h-10 w-full max-w-md bg-muted rounded" />
-      </div>
 
       {/* Content Grid Skeleton */}
       <div className="grid gap-6 lg:gap-8 lg:grid-cols-[minmax(320px,400px)_1fr]">

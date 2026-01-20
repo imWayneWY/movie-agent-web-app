@@ -203,25 +203,38 @@ export const AdvancedFilters = React.forwardRef<
                 <h3 id="genre-heading" className="mb-3 text-sm font-semibold">
                   Genres
                 </h3>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                  {GENRES.map((genre) => (
-                    <label
-                      key={genre}
-                      className={cn(
-                        'flex items-center gap-2 rounded-md p-2',
-                        'cursor-pointer transition-colors hover:bg-accent/50',
-                        disabled && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      <Checkbox
-                        checked={selectedGenres.includes(genre)}
-                        onCheckedChange={() => handleGenreToggle(genre)}
-                        disabled={disabled}
-                        aria-label={genre}
-                      />
-                      <span className="text-sm">{genre}</span>
-                    </label>
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {GENRES.map((genre) => {
+                    const genreId = `genre-${genre.toLowerCase().replace(/\s+/g, '-')}`;
+                    return (
+                      <div
+                        key={genre}
+                        className={cn(
+                          'flex items-center gap-2 rounded-md px-3 py-2',
+                          'transition-colors hover:bg-accent/50',
+                          'border border-transparent',
+                          selectedGenres.includes(genre) && 'border-primary/50 bg-accent/30',
+                          disabled && 'opacity-50'
+                        )}
+                      >
+                        <Checkbox
+                          id={genreId}
+                          checked={selectedGenres.includes(genre)}
+                          onCheckedChange={() => handleGenreToggle(genre)}
+                          disabled={disabled}
+                        />
+                        <label
+                          htmlFor={genreId}
+                          className={cn(
+                            'text-sm whitespace-nowrap select-none',
+                            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                          )}
+                        >
+                          {genre}
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
 
@@ -233,30 +246,44 @@ export const AdvancedFilters = React.forwardRef<
                 <h3 id="platform-heading" className="mb-3 text-sm font-semibold">
                   Streaming Platforms
                 </h3>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                  {PLATFORMS.map((platform) => (
-                    <label
-                      key={platform.id}
-                      className={cn(
-                        'flex items-center gap-2 rounded-md p-2',
-                        'cursor-pointer transition-colors hover:bg-accent/50',
-                        disabled && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      <Checkbox
-                        checked={selectedPlatforms.includes(platform.id)}
-                        onCheckedChange={() => handlePlatformToggle(platform.id)}
-                        disabled={disabled}
-                        aria-label={platform.name}
-                      />
-                      <img
-                        src={platform.logo}
-                        alt={`${platform.name} logo`}
-                        className="h-5 w-5 object-contain"
-                      />
-                      <span className="text-sm">{platform.name}</span>
-                    </label>
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {PLATFORMS.map((platform) => {
+                    const platformId = `platform-${platform.id}`;
+                    return (
+                      <div
+                        key={platform.id}
+                        className={cn(
+                          'flex items-center gap-2 rounded-md px-3 py-2',
+                          'transition-colors hover:bg-accent/50',
+                          'border border-transparent',
+                          selectedPlatforms.includes(platform.id) && 'border-primary/50 bg-accent/30',
+                          disabled && 'opacity-50'
+                        )}
+                      >
+                        <Checkbox
+                          id={platformId}
+                          checked={selectedPlatforms.includes(platform.id)}
+                          onCheckedChange={() => handlePlatformToggle(platform.id)}
+                          disabled={disabled}
+                        />
+                        <label
+                          htmlFor={platformId}
+                          className={cn(
+                            'flex items-center gap-2',
+                            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                          )}
+                        >
+                          <img
+                            src={platform.logo}
+                            alt=""
+                            className="h-5 w-5 object-contain"
+                            aria-hidden="true"
+                          />
+                          <span className="text-sm whitespace-nowrap select-none">{platform.name}</span>
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
 
@@ -382,9 +409,9 @@ export function AdvancedFiltersSkeleton({
           {/* Genre section skeleton */}
           <div>
             <Skeleton className="mb-3 h-4 w-16" />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            <div className="flex flex-wrap gap-2">
               {Array.from({ length: 12 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-full rounded-md" />
+                <Skeleton key={i} className="h-9 w-24 rounded-md" />
               ))}
             </div>
           </div>
@@ -392,9 +419,9 @@ export function AdvancedFiltersSkeleton({
           {/* Platform section skeleton */}
           <div>
             <Skeleton className="mb-3 h-4 w-32" />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            <div className="flex flex-wrap gap-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-full rounded-md" />
+                <Skeleton key={i} className="h-9 w-28 rounded-md" />
               ))}
             </div>
           </div>

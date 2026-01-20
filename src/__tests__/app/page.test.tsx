@@ -4,14 +4,13 @@
  * Tests for the main page integration including:
  * - Component rendering
  * - State flow (form → API → results)
- * - User journey flows
- * - Mode switching
+ * - User journey flows (single page with AI insights + movie list)
  * - Error handling
  * - Responsive behavior
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Home from '@/app/page';
 import { HomeContent, EmptyState, HomeLoading } from '@/app/home-components';
@@ -28,11 +27,16 @@ const mockStartStreaming = jest.fn();
 const mockStopStreaming = jest.fn();
 const mockResetStreaming = jest.fn();
 
+// Track mock loading state for useRecommendations
+// eslint-disable-next-line prefer-const
+let mockHookIsLoading = false;
+
 jest.mock('@/hooks/use-recommendations', () => ({
   useRecommendations: () => ({
     fetchRecommendations: mockFetchRecommendations,
     reset: mockResetRecommendations,
     recommendations: [],
+    isLoading: mockHookIsLoading,
     error: null,
   }),
 }));
@@ -76,7 +80,7 @@ const mockMovie = {
   originalLanguage: 'en',
   matchReason: 'Perfect for your mood',
   platforms: [
-    { id: 'netflix', name: 'Netflix', logo: '/platforms/netflix.svg' },
+    { id: 'netflix' as const, name: 'Netflix', logo: '/platforms/netflix.svg' },
   ],
 };
 
@@ -113,7 +117,7 @@ afterEach(() => {
 /**
  * Render HomeContent with AppProvider
  */
-function renderHomeContent(initialState?: Partial<AppState>) {
+function renderHomeContent(initialState: Partial<AppState>) {
   return render(
     <AppProvider initialState={initialState}>
       <HomeContent testId="home-content" />
@@ -155,13 +159,6 @@ describe('Home Page', () => {
       expect(screen.getByText(/AI-Powered Movie Recommendations/i)).toBeInTheDocument();
     });
 
-    it('renders mode selector tabs', () => {
-      render(<Home />);
-      
-      expect(screen.getByTestId('mode-structured')).toBeInTheDocument();
-      expect(screen.getByTestId('mode-streaming')).toBeInTheDocument();
-    });
-
     it('renders BotContainer form', () => {
       render(<Home />);
       
@@ -179,70 +176,16 @@ describe('Home Page', () => {
       expect(screen.getByText(/Ready to discover/i)).toBeInTheDocument();
     });
 
-    it('starts with structured mode selected', () => {
+    it('renders AI insights section', () => {
       render(<Home />);
       
-      const structuredTab = screen.getByTestId('mode-structured');
-      expect(structuredTab).toHaveAttribute('data-state', 'active');
-    });
-  });
-
-  // ===========================================================================
-  // TESTS: MODE SWITCHING
-  // ===========================================================================
-
-  describe('Mode Switching', () => {
-    it('can switch to streaming mode', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      const streamingTab = screen.getByTestId('mode-streaming');
-      await user.click(streamingTab);
-      
-      expect(streamingTab).toHaveAttribute('data-state', 'active');
-      expect(screen.getByTestId('mode-structured')).toHaveAttribute('data-state', 'inactive');
+      expect(screen.getByTestId('ai-insights-section')).toBeInTheDocument();
     });
 
-    it('can switch back to structured mode', async () => {
-      const user = userEvent.setup();
+    it('renders results section', () => {
       render(<Home />);
       
-      // Switch to streaming
-      await user.click(screen.getByTestId('mode-streaming'));
-      
-      // Switch back to structured
-      await user.click(screen.getByTestId('mode-structured'));
-      
-      expect(screen.getByTestId('mode-structured')).toHaveAttribute('data-state', 'active');
-    });
-
-    it('shows structured results container in structured mode', () => {
-      render(<Home />);
-      
-      expect(screen.getByTestId('results-structured')).toBeInTheDocument();
-    });
-
-    it('shows streaming results container in streaming mode', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      await user.click(screen.getByTestId('mode-streaming'));
-      
-      expect(screen.getByTestId('results-streaming')).toBeInTheDocument();
-    });
-
-    it('updates empty state message based on mode', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      // Structured mode message
-      expect(screen.getByText(/click "Get Recommendations"/i)).toBeInTheDocument();
-      
-      // Switch to streaming
-      await user.click(screen.getByTestId('mode-streaming'));
-      
-      // Streaming mode message
-      expect(screen.getByText(/let our AI guide you/i)).toBeInTheDocument();
+      expect(screen.getByTestId('results-section')).toBeInTheDocument();
     });
   });
 
@@ -276,7 +219,7 @@ describe('Home Page', () => {
       expect(getSubmitButton()).toBeEnabled();
     });
 
-    it('calls fetchRecommendations on form submit in structured mode', async () => {
+    it('calls both fetchRecommendations and startStreaming on form submit', async () => {
       const user = userEvent.setup();
       render(<Home />);
       
@@ -288,51 +231,31 @@ describe('Home Page', () => {
       
       await waitFor(() => {
         expect(mockFetchRecommendations).toHaveBeenCalled();
-      });
-    });
-
-    it('calls startStreaming on form submit in streaming mode', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      // Switch to streaming mode
-      await user.click(screen.getByTestId('mode-streaming'));
-      
-      // Select mood
-      await user.click(getMoodButton('Happy'));
-      
-      // Submit form
-      await user.click(getSubmitButton());
-      
-      await waitFor(() => {
         expect(mockStartStreaming).toHaveBeenCalled();
       });
     });
   });
 
   // ===========================================================================
-  // TESTS: STATE FLOW - STRUCTURED MODE
+  // TESTS: STATE FLOW
   // ===========================================================================
 
-  describe('State Flow - Structured Mode', () => {
-    it('shows loading state while fetching', async () => {
-      const user = userEvent.setup();
-      
-      // Make fetch hang
-      mockFetchRecommendations.mockImplementation(() => new Promise(() => {}));
-      
-      render(<Home />);
-      
-      await user.click(getMoodButton('Happy'));
-      await user.click(getSubmitButton());
+  describe('State Flow', () => {
+    it('shows loading state while fetching', () => {
+      // Test loading state by pre-populating context with isLoading: true
+      renderHomeContent({
+        isLoading: true,
+        userInput: { mood: 'happy' },
+      });
       
       // Form should be in loading state - button text changes to "Searching..."
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /searching/i })).toBeInTheDocument();
-      });
+      expect(screen.getByRole('button', { name: /searching/i })).toBeInTheDocument();
+      
+      // Skeleton loader should be shown
+      expect(screen.getByTestId('movie-list-skeleton')).toBeInTheDocument();
     });
 
-    it('displays recommendations after successful fetch', async () => {
+    it('displays recommendations after successful fetch', () => {
       // Pre-populate state with recommendations
       renderHomeContent({
         recommendations: [mockMovie],
@@ -371,45 +294,23 @@ describe('Home Page', () => {
       // Retry button should be present
       expect(screen.getByRole('button', { name: /retry|try again/i })).toBeInTheDocument();
     });
-  });
 
-  // ===========================================================================
-  // TESTS: STATE FLOW - STREAMING MODE
-  // ===========================================================================
-
-  describe('State Flow - Streaming Mode', () => {
     it('shows streaming content when available', async () => {
       renderHomeContent({
-        fetchMode: 'streaming',
         streamingContent: 'Here are some movie recommendations...',
         isStreaming: false,
         isStreamingComplete: true,
       });
       
-      // Wait for the streaming output to appear (may have typing animation)
+      // Wait for the streaming output to appear
       await waitFor(() => {
         const streamingOutput = screen.getByTestId('streaming-output');
         expect(streamingOutput).toBeInTheDocument();
       });
     });
 
-    it('shows streaming movies when received', async () => {
-      renderHomeContent({
-        fetchMode: 'streaming',
-        streamingContent: 'Recommendations:',
-        streamingMovies: [mockMovie],
-        isStreaming: false,
-        isStreamingComplete: true,
-      });
-      
-      await waitFor(() => {
-        expect(screen.getByText('Test Movie')).toBeInTheDocument();
-      });
-    });
-
     it('displays streaming error when present', () => {
       renderHomeContent({
-        fetchMode: 'streaming',
         streamingContent: '',
         streamingError: {
           type: 'NETWORK_ERROR',
@@ -419,6 +320,22 @@ describe('Home Page', () => {
       
       expect(screen.getByTestId('streaming-error')).toBeInTheDocument();
       expect(screen.getByText(/Connection lost/i)).toBeInTheDocument();
+    });
+
+    it('shows both AI insights and movie list simultaneously', async () => {
+      renderHomeContent({
+        recommendations: [mockMovie],
+        streamingContent: 'AI analysis of your preferences...',
+        isLoading: false,
+        isStreaming: false,
+        isStreamingComplete: true,
+      });
+      
+      // Both should be visible
+      await waitFor(() => {
+        expect(screen.getByTestId('streaming-output')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Test Movie')).toBeInTheDocument();
     });
   });
 
@@ -430,6 +347,14 @@ describe('Home Page', () => {
     it('shows reset button when results are available', () => {
       renderHomeContent({
         recommendations: [mockMovie],
+      });
+      
+      expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
+    });
+
+    it('shows reset button when streaming content is available', () => {
+      renderHomeContent({
+        streamingContent: 'Some AI response',
       });
       
       expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
@@ -452,6 +377,7 @@ describe('Home Page', () => {
       await user.click(resetButton);
       
       expect(mockResetRecommendations).toHaveBeenCalled();
+      expect(mockResetStreaming).toHaveBeenCalled();
     });
   });
 
@@ -471,7 +397,6 @@ describe('Home Page', () => {
       render(<Home />);
       
       const container = screen.getByTestId('home-page');
-      // Get the main content grid (not the tabs grid) - it has gap-6 class
       const grids = container.querySelectorAll('.grid');
       const mainGrid = Array.from(grids).find(g => g.classList.contains('gap-6'));
       expect(mainGrid).toHaveClass('lg:grid-cols-[minmax(320px,400px)_1fr]');
@@ -490,35 +415,8 @@ describe('Home Page', () => {
   // ===========================================================================
 
   describe('Accessibility', () => {
-    it('has accessible mode selector tabs', () => {
-      render(<Home />);
-      
-      const tablist = screen.getByRole('tablist');
-      expect(tablist).toBeInTheDocument();
-      
-      const tabs = screen.getAllByRole('tab');
-      expect(tabs).toHaveLength(2);
-    });
-
-    it('tabs have correct aria-selected state', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      const structuredTab = screen.getByTestId('mode-structured');
-      const streamingTab = screen.getByTestId('mode-streaming');
-      
-      expect(structuredTab).toHaveAttribute('aria-selected', 'true');
-      expect(streamingTab).toHaveAttribute('aria-selected', 'false');
-      
-      await user.click(streamingTab);
-      
-      expect(structuredTab).toHaveAttribute('aria-selected', 'false');
-      expect(streamingTab).toHaveAttribute('aria-selected', 'true');
-    });
-
     it('error messages have alert role', () => {
       renderHomeContent({
-        fetchMode: 'streaming',
         streamingError: {
           type: 'NETWORK_ERROR',
           message: 'Error occurred',
@@ -534,10 +432,10 @@ describe('Home Page', () => {
   // ===========================================================================
 
   describe('EmptyState Component', () => {
-    it('renders structured mode empty state', () => {
+    it('renders empty state with correct content', () => {
       render(
         <AppProvider>
-          <EmptyState mode="structured" />
+          <EmptyState />
         </AppProvider>
       );
       
@@ -545,21 +443,10 @@ describe('Home Page', () => {
       expect(screen.getByText(/Get Recommendations/i)).toBeInTheDocument();
     });
 
-    it('renders streaming mode empty state', () => {
-      render(
-        <AppProvider>
-          <EmptyState mode="streaming" />
-        </AppProvider>
-      );
-      
-      expect(screen.getByText(/Ready to discover/i)).toBeInTheDocument();
-      expect(screen.getByText(/AI guide you/i)).toBeInTheDocument();
-    });
-
     it('has movie emoji icon', () => {
       render(
         <AppProvider>
-          <EmptyState mode="structured" />
+          <EmptyState />
         </AppProvider>
       );
       
@@ -594,10 +481,9 @@ describe('Home Page', () => {
   // ===========================================================================
 
   describe('Full User Journey', () => {
-    it('completes structured mode journey: select mood → submit → view results', async () => {
+    it('completes full journey: select mood → submit → view both AI insights and movies', async () => {
       const user = userEvent.setup();
       
-      // Render with results available after fetch
       render(<Home />);
       
       // Step 1: User sees the initial state
@@ -609,32 +495,13 @@ describe('Home Page', () => {
       // Step 3: User submits the form
       await user.click(getSubmitButton());
       
-      // Step 4: fetchRecommendations should be called
+      // Step 4: Both APIs should be called
       await waitFor(() => {
         expect(mockFetchRecommendations).toHaveBeenCalledWith(
           expect.objectContaining({ mood: 'happy' })
         );
-      });
-    });
-
-    it('completes streaming mode journey: switch mode → select mood → submit → stream', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      // Step 1: Switch to streaming mode
-      await user.click(screen.getByTestId('mode-streaming'));
-      expect(screen.getByTestId('results-streaming')).toBeInTheDocument();
-      
-      // Step 2: Select a mood
-      await user.click(getMoodButton('Excited'));
-      
-      // Step 3: Submit the form
-      await user.click(getSubmitButton());
-      
-      // Step 4: startStreaming should be called
-      await waitFor(() => {
         expect(mockStartStreaming).toHaveBeenCalledWith(
-          expect.objectContaining({ mood: 'excited' })
+          expect.objectContaining({ mood: 'happy' })
         );
       });
     });
@@ -655,92 +522,5 @@ describe('Home Page', () => {
       // User can submit again
       expect(getSubmitButton()).toBeEnabled();
     });
-  });
-
-  // ===========================================================================
-  // TESTS: EDGE CASES
-  // ===========================================================================
-
-  describe('Edge Cases', () => {
-    it('handles rapid mode switching', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      // Rapidly switch modes
-      await user.click(screen.getByTestId('mode-streaming'));
-      await user.click(screen.getByTestId('mode-structured'));
-      await user.click(screen.getByTestId('mode-streaming'));
-      
-      // Should end up in streaming mode
-      expect(screen.getByTestId('mode-streaming')).toHaveAttribute('data-state', 'active');
-    });
-
-    it('disables mode switching while processing', async () => {
-      const user = userEvent.setup();
-      
-      renderHomeContent({
-        isLoading: true,
-      });
-      
-      const streamingTab = screen.getByTestId('mode-streaming');
-      expect(streamingTab).toBeDisabled();
-    });
-
-    it('preserves form state across mode switches', async () => {
-      const user = userEvent.setup();
-      render(<Home />);
-      
-      // Select mood
-      await user.click(getMoodButton('Happy'));
-      
-      // Switch modes
-      await user.click(screen.getByTestId('mode-streaming'));
-      await user.click(screen.getByTestId('mode-structured'));
-      
-      // Mood should still be selected (form maintains its own state)
-      const happyButton = getMoodButton('Happy');
-      expect(happyButton).toHaveAttribute('aria-pressed', 'true');
-    });
-
-    it('stops streaming when switching to structured mode', async () => {
-      const user = userEvent.setup();
-      
-      renderHomeContent({
-        fetchMode: 'streaming',
-        isStreaming: true,
-      });
-      
-      // Switch to structured mode
-      const structuredTab = screen.getByTestId('mode-structured');
-      // Tab is disabled while streaming
-      expect(structuredTab).toBeDisabled();
-    });
-  });
-});
-
-// =============================================================================
-// TESTS: TABS COMPONENT
-// =============================================================================
-
-describe('Tabs Component', () => {
-  it('renders with correct structure', () => {
-    render(<Home />);
-    
-    expect(screen.getByTestId('tabs')).toBeInTheDocument();
-    expect(screen.getByTestId('tabs-list')).toBeInTheDocument();
-  });
-
-  it('handles value changes correctly', async () => {
-    const user = userEvent.setup();
-    render(<Home />);
-    
-    const structuredTab = screen.getByTestId('mode-structured');
-    const streamingTab = screen.getByTestId('mode-streaming');
-    
-    // Click streaming tab
-    await user.click(streamingTab);
-    
-    expect(structuredTab).toHaveAttribute('data-state', 'inactive');
-    expect(streamingTab).toHaveAttribute('data-state', 'active');
   });
 });

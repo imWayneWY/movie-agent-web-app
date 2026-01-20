@@ -105,6 +105,7 @@ export function MovieCard({ movie, className }: MovieCardProps) {
       >
         {posterUrl ? (
           <Image
+            key={posterUrl}
             src={posterUrl}
             alt={`${title} poster`}
             fill
