@@ -295,7 +295,7 @@ export class MovieAgentService {
         genres?: string[];
         streamingPlatforms?: Array<{ name: string; logo?: string; link?: string; type?: string }>;
         matchReason?: string;
-        voteAverage?: number;
+        rating?: number | null;
         voteCount?: number;
         originalLanguage?: string;
       }> 
@@ -335,7 +335,7 @@ export class MovieAgentService {
         backdropPath: null,
         releaseDate,
         runtime: rec.runtime || null,
-        voteAverage: rec.voteAverage || 0,
+        voteAverage: rec.rating ?? 0,
         voteCount: rec.voteCount || 0,
         genres: rec.genres || [],
         originalLanguage: rec.originalLanguage || 'en',
