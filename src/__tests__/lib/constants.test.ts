@@ -32,8 +32,8 @@ import {
 
 describe('Mood Constants', () => {
   describe('MOODS', () => {
-    it('should contain 8 mood options', () => {
-      expect(MOODS).toHaveLength(8);
+    it('should contain 5 mood options', () => {
+      expect(MOODS).toHaveLength(5);
     });
 
     it('should have valid structure for each mood', () => {
@@ -56,13 +56,10 @@ describe('Mood Constants', () => {
     it('should include expected moods', () => {
       const values = MOODS.map((m) => m.value);
       expect(values).toContain('happy');
-      expect(values).toContain('sad');
       expect(values).toContain('excited');
       expect(values).toContain('relaxed');
       expect(values).toContain('scared');
       expect(values).toContain('thoughtful');
-      expect(values).toContain('romantic');
-      expect(values).toContain('adventurous');
     });
   });
 

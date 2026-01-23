@@ -11,16 +11,19 @@
 
 /**
  * Valid mood values that users can select
+ * Maps to movie-agent supported moods:
+ * - happy → Comedy, Family, Musical
+ * - thoughtful → Drama, Documentary, Biography
+ * - excited → Action, Adventure, Thriller
+ * - relaxed → Romance, Comedy, Animation
+ * - scared → Horror, Thriller, Mystery
  */
 export type MoodValue =
   | 'happy'
-  | 'sad'
   | 'excited'
   | 'relaxed'
   | 'scared'
-  | 'thoughtful'
-  | 'romantic'
-  | 'adventurous';
+  | 'thoughtful';
 
 /**
  * Mood option with display information

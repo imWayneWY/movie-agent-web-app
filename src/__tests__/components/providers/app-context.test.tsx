@@ -745,7 +745,7 @@ describe('State Updates and Propagation', () => {
       return (
         <div>
           <div data-testid="consumer2-mood">{state.userInput.mood || 'none'}</div>
-          <button onClick={() => userInputActions.setMood('sad')}>Change Mood</button>
+          <button onClick={() => userInputActions.setMood('scared')}>Change Mood</button>
         </div>
       );
     }
@@ -764,8 +764,8 @@ describe('State Updates and Propagation', () => {
       screen.getByText('Change Mood').click();
     });
 
-    expect(screen.getByTestId('consumer1-mood')).toHaveTextContent('sad');
-    expect(screen.getByTestId('consumer2-mood')).toHaveTextContent('sad');
+    expect(screen.getByTestId('consumer1-mood')).toHaveTextContent('scared');
+    expect(screen.getByTestId('consumer2-mood')).toHaveTextContent('scared');
   });
 
   it('should maintain state integrity with rapid updates', async () => {

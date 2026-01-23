@@ -114,6 +114,7 @@ export function convertToStreamRequest(input: UserInput): StreamRequest {
 
 /**
  * Parse SSE event data
+ * All data is JSON-encoded to handle newlines properly
  */
 export function parseSSEEvent(eventType: string, data: string): {
   type: StreamEventType;
@@ -121,7 +122,14 @@ export function parseSSEEvent(eventType: string, data: string): {
 } {
   switch (eventType) {
     case 'text':
-      return { type: 'text', payload: data };
+      try {
+        // Data is JSON-encoded string, parse it to get the actual text
+        const text = JSON.parse(data) as string;
+        return { type: 'text', payload: text };
+      } catch {
+        // Fallback to raw data if parsing fails
+        return { type: 'text', payload: data };
+      }
 
     case 'movie':
       try {
@@ -354,6 +362,16 @@ export function useStreaming(
             if (!isMountedRef.current) return;
 
             const parsed = parseSSEEvent(eventType, data);
+            
+            // Log received events in dev mode
+            if (process.env.NODE_ENV === 'development') {
+              if (parsed.type === 'text') {
+                const textPayload = parsed.payload as string;
+                console.log('[SSE Received] text event', { length: textPayload.length, preview: textPayload.substring(0, 100) + '...' });
+              } else {
+                console.log('[SSE Received] event', { type: parsed.type });
+              }
+            }
 
             switch (parsed.type) {
               case 'text':

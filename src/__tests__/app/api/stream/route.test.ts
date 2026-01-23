@@ -554,8 +554,9 @@ describe('POST /api/stream', () => {
 
       const body = await readResponseBody(response);
       
-      // Check SSE format: "event: <type>\ndata: <data>\n\n"
-      expect(body).toMatch(/event: text\ndata: Hello World\n\n/);
+      // Check SSE format: "event: <type>\ndata: <json-stringified-data>\n\n"
+      // Data is JSON stringified to handle newlines properly
+      expect(body).toMatch(/event: text\ndata: "Hello World"\n\n/);
       expect(body).toMatch(/event: done\ndata: null\n\n/);
     });
   });
@@ -612,7 +613,10 @@ describe('POST /api/stream', () => {
       const response = await POST(request);
 
       const body = await readResponseBody(response);
-      expect(body).toContain('Special chars: <>&"\'');
+      // Data is JSON stringified, so quotes are escaped in the JSON output
+      // The raw input is: Special chars: <>&"'
+      // After JSON.stringify it becomes: "Special chars: <>&\"'"
+      expect(body).toContain('Special chars: <>&\\"');
     });
 
     it('should handle unicode in text events', async () => {

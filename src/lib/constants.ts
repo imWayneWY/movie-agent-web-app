@@ -19,16 +19,19 @@ import type {
 
 /**
  * Available mood options for movie recommendations
+ * These map to movie-agent's supported moods:
+ * - happy → Comedy, Family, Musical
+ * - thoughtful → Drama, Documentary, Biography
+ * - excited → Action, Adventure, Thriller
+ * - relaxed → Romance, Comedy, Animation
+ * - scared → Horror, Thriller, Mystery
  */
 export const MOODS: readonly Mood[] = [
   { value: 'happy', label: 'Happy', emoji: '😊' },
-  { value: 'sad', label: 'Sad', emoji: '😢' },
   { value: 'excited', label: 'Excited', emoji: '🎉' },
   { value: 'relaxed', label: 'Relaxed', emoji: '😌' },
   { value: 'scared', label: 'Scared', emoji: '😱' },
   { value: 'thoughtful', label: 'Thoughtful', emoji: '🤔' },
-  { value: 'romantic', label: 'Romantic', emoji: '💕' },
-  { value: 'adventurous', label: 'Adventurous', emoji: '🗺️' },
 ] as const;
 
 /**

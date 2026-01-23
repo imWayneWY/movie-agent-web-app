@@ -848,7 +848,7 @@ describe('useStreaming', () => {
 
       // Second stream
       act(() => {
-        result.current.startStreaming({ mood: 'sad' });
+        result.current.startStreaming({ mood: 'scared' });
       });
 
       await waitFor(() => {
@@ -1161,7 +1161,7 @@ describe('useStreaming', () => {
 
       // Start new stream - should reset content
       act(() => {
-        result.current.startStreaming({ mood: 'sad' });
+        result.current.startStreaming({ mood: 'scared' });
       });
 
       // Content should be reset when starting new stream

@@ -118,13 +118,13 @@ describe('BotContainer', () => {
       render(<BotContainer onSubmit={mockOnSubmit} />);
 
       const happyButton = screen.getByRole('button', { name: /happy/i });
-      const sadButton = screen.getByRole('button', { name: /sad/i });
+      const excitedButton = screen.getByRole('button', { name: /excited/i });
 
       await user.click(happyButton);
       expect(happyButton).toHaveAttribute('aria-pressed', 'true');
 
-      await user.click(sadButton);
-      expect(sadButton).toHaveAttribute('aria-pressed', 'true');
+      await user.click(excitedButton);
+      expect(excitedButton).toHaveAttribute('aria-pressed', 'true');
       expect(happyButton).toHaveAttribute('aria-pressed', 'false');
     });
 
@@ -597,11 +597,11 @@ describe('BotContainer', () => {
       ).toHaveAttribute('aria-pressed', 'true');
 
       rerender(
-        <BotContainer onSubmit={mockOnSubmit} mood="sad" onMoodChange={() => {}} />
+        <BotContainer onSubmit={mockOnSubmit} mood="excited" onMoodChange={() => {}} />
       );
 
       expect(
-        screen.getByRole('button', { name: /sad/i })
+        screen.getByRole('button', { name: /excited/i })
       ).toHaveAttribute('aria-pressed', 'true');
       expect(
         screen.getByRole('button', { name: /happy/i })
@@ -620,9 +620,9 @@ describe('BotContainer', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: /sad/i }));
+      await user.click(screen.getByRole('button', { name: /scared/i }));
 
-      expect(mockOnMoodChange).toHaveBeenCalledWith('sad');
+      expect(mockOnMoodChange).toHaveBeenCalledWith('scared');
     });
   });
 

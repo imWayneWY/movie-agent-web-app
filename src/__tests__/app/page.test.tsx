@@ -517,7 +517,7 @@ describe('Home Page', () => {
       expect(screen.getByText('Test Movie')).toBeInTheDocument();
       
       // User selects a different mood
-      await user.click(getMoodButton('Sad'));
+      await user.click(getMoodButton('Scared'));
       
       // User can submit again
       expect(getSubmitButton()).toBeEnabled();

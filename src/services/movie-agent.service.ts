@@ -20,6 +20,10 @@ import type {
 } from '@/types';
 import { AppError } from '@/lib/errors';
 import { env } from '@/config/env';
+import { logger } from '@/lib/logger';
+
+// Check if we're in development mode
+const isDev = process.env.NODE_ENV === 'development';
 
 // =============================================================================
 // CONSTANTS
@@ -112,6 +116,7 @@ export class MovieAgentService {
     const baseConfig = {
       tmdbAccessToken: env.tmdbAccessToken,
       tmdbRegion: 'CA' as const,
+      minRecommendations: env.minRecommendations,
     };
 
     if (this.config.provider === 'azure') {
@@ -180,11 +185,39 @@ export class MovieAgentService {
 
     // Use movie-agent's stream method
     let streamText = '';
+    let chunkCount = 0;
+    
+    // Dev mode: Log exact parameters being sent to movie-agent package
+    if (isDev) {
+      logger.debug('[MovieAgentService.getRecommendationsStream] Incoming request:', {
+        mood: request.mood,
+        genres: request.genres,
+        platforms: request.platforms,
+        runtime: request.runtime,
+        releaseYear: request.releaseYear,
+      });
+      logger.debug('[MovieAgentService.getRecommendationsStream] Params sent to movie-agent.stream():', agentInput);
+    }
     
     try {
       await this.agent.stream(agentInput, (chunk: string) => {
+        chunkCount++;
         streamText += chunk;
+        // Log each chunk in dev mode
+        if (isDev) {
+          process.stdout.write(chunk);
+        }
       });
+
+      // Log complete response in dev mode
+      if (isDev) {
+        console.log('\n'); // New line after streaming
+        logger.debug('[AI Stream] Complete response:', { 
+          length: streamText.length, 
+          chunkCount,
+          fullText: streamText 
+        });
+      }
 
       // Yield the complete text as a single event after streaming completes
       yield { type: 'text' as const, data: streamText };
@@ -270,6 +303,18 @@ export class MovieAgentService {
     if (request.runtime) agentInput.runtime = request.runtime;
     if (request.releaseYear) agentInput.releaseYear = request.releaseYear;
 
+    // Dev mode: Log exact parameters being sent to movie-agent package
+    if (isDev) {
+      logger.debug('[MovieAgentService.callAgent] Incoming request:', {
+        mood: request.mood,
+        genres: request.genres,
+        platforms: request.platforms,
+        runtime: request.runtime,
+        releaseYear: request.releaseYear,
+      });
+      logger.debug('[MovieAgentService.callAgent] Params sent to movie-agent.getRecommendations():', agentInput);
+    }
+
     const result = await this.agent.getRecommendations(agentInput);
 
     // Check for error response
@@ -343,6 +388,26 @@ export class MovieAgentService {
         platforms,
       };
     });
+
+    // Log movie recommendations in dev mode
+    if (isDev) {
+      logger.debug('[AI Movies] Received recommendations:', { count: recommendations.length });
+      console.log('\n📽️  Movie Recommendations:');
+      console.log('─'.repeat(50));
+      recommendations.forEach((movie, i) => {
+        console.log(`${i + 1}. ${movie.title} (${movie.releaseDate || 'N/A'})`);
+        if (movie.genres?.length) {
+          console.log(`   Genres: ${movie.genres.join(', ')}`);
+        }
+        if (movie.platforms?.length) {
+          console.log(`   Platforms: ${movie.platforms.map(p => p.name).join(', ')}`);
+        }
+        if (movie.matchReason) {
+          console.log(`   Match: ${movie.matchReason}`);
+        }
+      });
+      console.log('─'.repeat(50) + '\n');
+    }
 
     return { recommendations };
   }

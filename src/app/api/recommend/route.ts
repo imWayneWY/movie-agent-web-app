@@ -153,6 +153,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Validate and sanitize request
     const validatedRequest = validateRecommendRequest(body);
 
+    // Dev mode: Log incoming request details for debugging
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('[Recommend API] Raw request body:', { body: body as Record<string, unknown> });
+      logger.debug('[Recommend API] Validated request:', {
+        mood: validatedRequest.mood,
+        genres: validatedRequest.genres,
+        platforms: validatedRequest.platforms,
+        runtime: validatedRequest.runtime,
+        releaseYear: validatedRequest.releaseYear,
+      });
+    }
+
     // Check if at least one parameter is provided
     const hasParams =
       validatedRequest.mood ||
@@ -170,6 +182,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Convert to agent request format
     const agentRequest = convertToAgentRequest(validatedRequest);
+
+    // Dev mode: Log the converted agent request for debugging
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('[Recommend API] Converted AgentRequest:', {
+        mood: agentRequest.mood,
+        genres: agentRequest.genres,
+        platforms: agentRequest.platforms,
+        runtime: agentRequest.runtime,
+        releaseYear: agentRequest.releaseYear,
+      });
+    }
 
     logger.info('Processing recommendation request', {
       mood: agentRequest.mood,

@@ -69,6 +69,11 @@ export const env = {
     return parseInt(getOptionalEnv('RATE_LIMIT_WINDOW_MS', '60000'), 10);
   },
 
+  // Recommendations
+  get minRecommendations(): number {
+    return parseInt(getOptionalEnv('MIN_RECOMMENDATIONS', '1'), 10);
+  },
+
   // Node Environment
   get nodeEnv(): string {
     return getOptionalEnv('NODE_ENV', 'development');

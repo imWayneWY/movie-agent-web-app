@@ -42,9 +42,11 @@ const SSE_HEADERS = {
 
 /**
  * Format data for SSE (Server-Sent Events)
+ * Always JSON stringify to handle newlines properly - SSE treats raw newlines as end of data field
  */
 function formatSSEMessage(eventType: StreamEventType, data: unknown): string {
-  const dataString = typeof data === 'string' ? data : JSON.stringify(data);
+  // Always JSON stringify to escape newlines (\n becomes \\n in the JSON string)
+  const dataString = JSON.stringify(data);
   return `event: ${eventType}\ndata: ${dataString}\n\n`;
 }
 
@@ -165,6 +167,17 @@ async function createStreamingResponse(
           }
 
           const message = formatSSEMessage(event.type, event.data);
+          
+          // Log SSE events in dev mode
+          if (process.env.NODE_ENV === 'development') {
+            if (event.type === 'text') {
+              const textData = event.data as string;
+              logger.debug('[SSE Send] text event', { length: textData.length, preview: textData.substring(0, 100) + '...' });
+            } else {
+              logger.debug('[SSE Send] event', { type: event.type });
+            }
+          }
+          
           controller.enqueue(encoder.encode(message));
         }
 
@@ -257,6 +270,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Validate and sanitize request
     const validatedRequest = validateStreamRequest(body);
 
+    // Dev mode: Log incoming request details for debugging
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('[Stream API] Raw request body:', { body: body as Record<string, unknown> });
+      logger.debug('[Stream API] Validated request:', {
+        mood: validatedRequest.mood,
+        genres: validatedRequest.genres,
+        platforms: validatedRequest.platforms,
+        runtime: validatedRequest.runtime,
+        releaseYear: validatedRequest.releaseYear,
+      });
+    }
+
     // Check if at least one parameter is provided
     const hasParams =
       validatedRequest.mood ||
@@ -274,6 +299,17 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Convert to agent request format
     const agentRequest = convertToAgentRequest(validatedRequest);
+
+    // Dev mode: Log the converted agent request for debugging
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('[Stream API] Converted AgentRequest:', {
+        mood: agentRequest.mood,
+        genres: agentRequest.genres,
+        platforms: agentRequest.platforms,
+        runtime: agentRequest.runtime,
+        releaseYear: agentRequest.releaseYear,
+      });
+    }
 
     logger.info('Processing stream request', {
       mood: agentRequest.mood,

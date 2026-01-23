@@ -142,18 +142,18 @@ describe('Mood Validators', () => {
   describe('isMoodValue', () => {
     it('should return true for valid mood values', () => {
       expect(isMoodValue('happy')).toBe(true);
-      expect(isMoodValue('sad')).toBe(true);
       expect(isMoodValue('excited')).toBe(true);
       expect(isMoodValue('relaxed')).toBe(true);
       expect(isMoodValue('scared')).toBe(true);
       expect(isMoodValue('thoughtful')).toBe(true);
-      expect(isMoodValue('romantic')).toBe(true);
-      expect(isMoodValue('adventurous')).toBe(true);
     });
 
     it('should return false for invalid mood values', () => {
       expect(isMoodValue('angry')).toBe(false);
       expect(isMoodValue('HAPPY')).toBe(false);
+      expect(isMoodValue('sad')).toBe(false);
+      expect(isMoodValue('romantic')).toBe(false);
+      expect(isMoodValue('adventurous')).toBe(false);
       expect(isMoodValue('')).toBe(false);
       expect(isMoodValue(123)).toBe(false);
       expect(isMoodValue(null)).toBe(false);

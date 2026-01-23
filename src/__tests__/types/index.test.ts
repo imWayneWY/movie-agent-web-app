@@ -51,15 +51,12 @@ describe('Type Definitions', () => {
     it('should work with all mood values', () => {
       const moods: MoodValue[] = [
         'happy',
-        'sad',
         'excited',
         'relaxed',
         'scared',
         'thoughtful',
-        'romantic',
-        'adventurous',
       ];
-      expect(moods).toHaveLength(8);
+      expect(moods).toHaveLength(5);
     });
   });
 

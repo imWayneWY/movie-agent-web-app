@@ -345,10 +345,13 @@ describe('AdvancedFilters', () => {
     it('displays platform logos', () => {
       render(<AdvancedFilters {...defaultProps} defaultExpanded />);
 
+      // Platform logos are decorative (aria-hidden) so we check they exist near platform names
       PLATFORMS.forEach((platform) => {
-        const logo = screen.getByAltText(`${platform.name} logo`);
-        expect(logo).toBeInTheDocument();
-        expect(logo).toHaveAttribute('src', platform.logo);
+        // Check the platform name is displayed
+        expect(screen.getByText(platform.name)).toBeInTheDocument();
+        // Check the logo image exists with the correct src (decorative images have empty alt)
+        const logos = document.querySelectorAll(`img[src="${platform.logo}"]`);
+        expect(logos.length).toBeGreaterThan(0);
       });
     });
   });

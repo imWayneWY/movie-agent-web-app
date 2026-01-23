@@ -445,7 +445,7 @@ describe('useRecommendations', () => {
       mockFetch.mockResolvedValueOnce(createMockResponse(secondResponse));
 
       await act(async () => {
-        await result.current.fetchRecommendations({ mood: 'sad' });
+        await result.current.fetchRecommendations({ mood: 'scared' });
       });
 
       expect(result.current.recommendations[0]?.id).toBe(2);

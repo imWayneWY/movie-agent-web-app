@@ -77,8 +77,8 @@ describe('MoodSelector', () => {
     it('does not apply selected styling to unselected moods', () => {
       render(<MoodSelector onSelect={mockOnSelect} selectedMood="happy" />);
 
-      const sadButton = screen.getByRole('button', { name: /sad/i });
-      expect(sadButton).not.toHaveClass('ring-2');
+      const excitedButton = screen.getByRole('button', { name: /excited/i });
+      expect(excitedButton).not.toHaveClass('ring-2');
     });
   });
 
@@ -119,12 +119,12 @@ describe('MoodSelector', () => {
       render(<MoodSelector onSelect={mockOnSelect} />);
 
       await user.click(screen.getByRole('button', { name: /happy/i }));
-      await user.click(screen.getByRole('button', { name: /sad/i }));
+      await user.click(screen.getByRole('button', { name: /scared/i }));
       await user.click(screen.getByRole('button', { name: /excited/i }));
 
       expect(mockOnSelect).toHaveBeenCalledTimes(3);
       expect(mockOnSelect).toHaveBeenNthCalledWith(1, 'happy');
-      expect(mockOnSelect).toHaveBeenNthCalledWith(2, 'sad');
+      expect(mockOnSelect).toHaveBeenNthCalledWith(2, 'scared');
       expect(mockOnSelect).toHaveBeenNthCalledWith(3, 'excited');
     });
   });
@@ -160,7 +160,7 @@ describe('MoodSelector', () => {
       firstButton.focus();
 
       await user.tab();
-      const secondButton = screen.getByRole('button', { name: /sad/i });
+      const secondButton = screen.getByRole('button', { name: /excited/i });
       expect(secondButton).toHaveFocus();
     });
 
@@ -168,7 +168,7 @@ describe('MoodSelector', () => {
       const user = userEvent.setup();
       render(<MoodSelector onSelect={mockOnSelect} />);
 
-      const secondButton = screen.getByRole('button', { name: /sad/i });
+      const secondButton = screen.getByRole('button', { name: /excited/i });
       secondButton.focus();
 
       await user.tab({ shift: true });
@@ -301,13 +301,13 @@ describe('MoodSelector', () => {
         'true'
       );
 
-      rerender(<MoodSelector onSelect={mockOnSelect} selectedMood="sad" />);
+      rerender(<MoodSelector onSelect={mockOnSelect} selectedMood="excited" />);
 
       expect(screen.getByRole('button', { name: /happy/i })).toHaveAttribute(
         'aria-pressed',
         'false'
       );
-      expect(screen.getByRole('button', { name: /sad/i })).toHaveAttribute(
+      expect(screen.getByRole('button', { name: /excited/i })).toHaveAttribute(
         'aria-pressed',
         'true'
       );
